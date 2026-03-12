@@ -145,6 +145,12 @@ class Sales_order extends CI_Controller {
 		$this->load->view('mobile/mobile.php',$data);
 		$this->load->view('mobile/footer.php');
 	}
+	public function customer_api()
+	{
+		$id_perusahaan = $this->session->userdata('perusahaan_id');
+		$data['customer'] = $this->db->query("SELECT * from tb_customer  where id_perusahaan = '$id_perusahaan' order by nama_customer")->result();
+		return json_encode($data['customer']);
+	}
 
 	public function halaman()
 	{
