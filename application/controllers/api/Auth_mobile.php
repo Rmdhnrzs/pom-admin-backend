@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
-
-class Auth_mobile extends CI_Controller
+require_once APPPATH . 'controllers/api/Api_Controller.php';
+class Auth_mobile extends Api_Controller
 {
     public function __construct()
     {
@@ -11,11 +11,7 @@ class Auth_mobile extends CI_Controller
 
     public function index()
     {
-        $data['title'] = 'Login Page';
-        $data['perusahaan'] = $this->db->query("SELECT * FROM tb_perusahaan order by id")->result();
-        $this->load->view('mobile/header.php', $data);
-        $this->load->view('mobile/login.php', $data);
-        $this->load->view('mobile/footer.php');
+        return $this->response($this->session->userdata(), 200);
     }
 
     public function login()
@@ -136,12 +132,5 @@ class Auth_mobile extends CI_Controller
             'status' => true,
             'data' => $perusahaan
         ], 200);
-    }
-
-    private function response($data, $status_code = 200)
-    {
-        $this->output->set_content_type('application/json');
-        $this->output->set_status_header($status_code);
-        $this->output->set_output(json_encode($data));
     }
 }

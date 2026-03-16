@@ -1,20 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-
-class Sales_order extends CI_Controller {
+require_once APPPATH . 'controllers/api/Api_Controller.php';
+class Sales_order extends Api_Controller {
     public function __construct(){
         parent::__construct();
         $this->load->library('cart');
-    }
-
-    private function checkAuth()
-    {
-        if ($this->session->userdata('login') != true) {
-            return $this->response([
-                'status' => false,
-                'message' => 'Unauthorized'
-            ], 401);
-        }
     }
 
     public function index()
@@ -44,9 +34,9 @@ class Sales_order extends CI_Controller {
 
         $this->checkAuth();
 
-        $id_customer = $this->session->userdata('id_customer');
-        $tipe_customer = $this->session->userdata('tipe_customer');
-        $tipe_po = $this->session->userdata('tipe_po');
+        $id_customer = $this->input->get('id_customer');
+        $tipe_customer = $this->input->get('tipe_customer');
+        $tipe_po = $this->input->get('tipe_po');
         $perusahaan_id = $this->session->userdata('perusahaan_id');
 
         if (!isset($id_customer)) {
@@ -377,12 +367,5 @@ class Sales_order extends CI_Controller {
                 'details' => $data_order_detail
             ]
         ], 200);
-    }
-
-    private function response($data, $status_code = 200)
-    {
-        $this->output->set_content_type('application/json');
-        $this->output->set_status_header($status_code);
-        $this->output->set_output(json_encode($data));
     }
 }
