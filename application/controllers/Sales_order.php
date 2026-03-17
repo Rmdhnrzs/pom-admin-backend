@@ -61,6 +61,7 @@ class Sales_order extends CI_Controller {
 	{
 
 		$cart = count($this->cart->contents());
+		print_r($this->cart->contents());
 		echo json_encode($cart);
 	}
 
@@ -89,6 +90,7 @@ class Sales_order extends CI_Controller {
 
 	public function add_cart()
 	{
+	// print_r($this->cart->contents());
     $id_produk = $this->input->post('id_produk');
 		$tipe_po = $this->session->userdata('tipe_po');
 		$id_customer = $this->session->userdata('id_customer');

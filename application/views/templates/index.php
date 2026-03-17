@@ -2,16 +2,12 @@
 
   <!-- Page Wrapper -->
   <div id="wrapper">
-
-    <?php // $this->load->view("templates/sidebar.php"); 
-    ?>
     <!-- Content Wrapper -->
     <div id="content-wrapper" class="d-flex flex-column">
 
       <!-- Main Content -->
       <div id="content">
         <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
-          <!-- <a class="navbar-brand" href="#">Navbar</a> -->
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -45,7 +41,11 @@
                 </li>
               <?php } ?>
 
-
+              <li class="nav-item <?= ($title == 'Gudang') ? 'active' : '' ?>">
+                <a class="nav-link" href="<?= base_url('Gudang') ?>">
+                  <i class="fas fa-file-excel"></i> Gudang
+                </a>
+              </li>
             </ul>
             <ul class="navbar-nav ml-auto">
 

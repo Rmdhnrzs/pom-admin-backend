@@ -1,11 +1,11 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 require_once APPPATH . 'controllers/api/Api_Controller.php';
-class Auth_mobile extends Api_Controller
+class Auth_Mobile_Api extends Api_Controller
 {
     public function __construct()
     {
-        parent::__construct();
+        parent::__construct();  
         $this->load->library('form_validation');
     }
 
@@ -13,7 +13,7 @@ class Auth_mobile extends Api_Controller
     {
         return $this->response($this->session->userdata(), 200);
     }
-
+# Coba tambahkan ini sementara di atas fungsi login() untuk verifikasi
     public function login()
     {
         if ($this->input->method() !== 'post') {
@@ -25,8 +25,8 @@ class Auth_mobile extends Api_Controller
 
         $username = $this->input->post('username');
         $password = $this->input->post('password');
-        $perusahaan_id = $this->input->post('perusahaan');
-
+        $perusahaan_id = $this->input->post('perusahaan_id');
+        
         if (!$username || !$password || !$perusahaan_id) {
             return $this->response([
                 'status' => false,
