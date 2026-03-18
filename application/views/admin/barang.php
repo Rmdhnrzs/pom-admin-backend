@@ -12,6 +12,31 @@
     margin-bottom: 10px;
   }
 
+  .btn_import {
+    margin-right: 10px;
+  }
+
+  .table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f8fafc;
+    transition: 0.2s;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .badge {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
   .data-barang {
     position: relative;
     padding: 10px;
@@ -57,6 +82,9 @@
     <button type="button" class="btn btn-success btn-sm float-right btn_tambah" data-toggle="modal" data-target="#modal_tambah">
       <i class="fas fa-plus"></i> Tambah Barang
     </button>
+    <button type="button" class="btn btn-secondary btn-sm float-right btn_import" data-toggle="modal" data-target="#modal_import">
+      <i class="fas fa-file-import"></i> Import Barang
+    </button>
     <table class="table table-striped" id="datatable" style="width: 100%;">
       <thead>
         <tr>
@@ -67,6 +95,7 @@
           <th>Keterangan</th>
           <th>Size</th>
           <th>Satuan</th>
+          <th>Kelipatan</th>
           <th>Retail</th>
           <th>Grosir</th>
           <th>Grosir_10</th>
@@ -95,6 +124,7 @@
             <td data-bs-toggle="tooltip" title="<?= $k->keterangan ?>"><?= (strlen($k->keterangan) > 40 ? substr($k->keterangan, 0, 40) . '...' : $k->keterangan) ?></td>
             <td><?= $k->size ?></td>
             <td><?= $k->satuan ?></td>
+            <td><?= $k->step_qty > 1 ? 'x'.$k->step_qty : '-' ?></td>
             <td>Rp <?= number_format($k->retail) ?></td>
             <td>Rp <?= number_format($k->grosir) ?></td>
             <td>Rp <?= number_format($k->grosir_10) ?></td>
@@ -183,7 +213,12 @@
                   <option value="BOX">BOX</option>
                 </select>
               </div>
-
+              <div class="form-group">
+                <label>Kelipatan :</label>
+                <input type="number" name="step_qty" class="form-control form-control-sm" value="1" min="1">
+                <small class="text-muted">Contoh: 5 = hanya bisa 5,10,15</small>
+              </div>
+              
             </div>
             <div class="col-md-4">
               <div class="form-group">
@@ -239,6 +274,130 @@
   </form>
 </div>
 <!-- end tambah -->
+
+<!-- modal import -->
+<div class="modal fade" id="modal_import" tabindex="-1" data-backdrop="static">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content shadow">
+
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-file-import mr-2"></i> Import Data Barang
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+
+      <form id="form_import" action="<?= base_url('Barang/import') ?>" method="POST" enctype="multipart/form-data">
+
+        <div class="modal-body">
+
+          <!-- INPUT -->
+          <div class="row">
+            <div class="col-md-6">
+              <label>Perusahaan</label>
+              <select name="id_perusahaan" id="import_perusahaan" class="form-control" required>
+                <option value="">-- Pilih --</option>
+                <?php foreach ($perusahaan as $p) { ?>
+                  <option value="<?= $p->id ?>"><?= $p->nama ?></option>
+                <?php } ?>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label>File Excel</label>
+              <input type="file" name="file" id="file_input" class="form-control" accept=".xlsx,.xls,.csv" required>
+            </div>
+          </div>
+
+          <!-- LOADING -->
+          <div id="loading_import" class="text-center mt-4 d-none">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted">Menganalisa file Excel...</p>
+          </div>
+
+          <!-- SUMMARY -->
+          <div id="summary_import" class="alert alert-light border mt-3 d-none"></div>
+
+          <!-- WARNING -->
+          <div id="warning_import" class="alert alert-warning mt-2 d-none">
+            Sistem hanya akan menambahkan data baru dan mengisi data kosong.
+          </div>
+
+          <!-- PREVIEW -->
+          <div id="preview_excel" class="mt-3 d-none">
+            <div class="row">
+
+              <!-- EXCEL -->
+              <div class="col-md-6">
+                <h6 class="text-primary">Excel</h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered">
+                    <thead class="thead-dark">
+                      <tr>
+                        <th>Status</th>
+                        <th>Kode</th>
+                        <th>PT</th>
+                        <th>Barang</th>
+                        <th>Keterangan</th>
+                        <th>Size</th>
+                        <th>Satuan</th>
+                        <th>Retail</th>
+                        <th>Grosir</th>
+                        <th>G10</th>
+                        <th>HET</th>
+                        <th>Indo</th>
+                        <th>SP</th>
+                        <th>Brg X</th>
+                      </tr>
+                    </thead>
+                    <tbody id="preview_excel_body"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- DB -->
+              <div class="col-md-6">
+                <h6 class="text-warning">Database</h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered">
+                    <thead class="thead-dark">
+                      <tr>
+                        <th>Status</th>
+                        <th>Kode</th>
+                        <th>PT</th>
+                        <th>Barang</th>
+                        <th>Keterangan</th>
+                        <th>Size</th>
+                        <th>Satuan</th>
+                        <th>Retail</th>
+                        <th>Grosir</th>
+                        <th>G10</th>
+                        <th>HET</th>
+                        <th>Indo</th>
+                        <th>SP</th>
+                        <th>Brg X</th>
+                      </tr>
+                    </thead>
+                    <tbody id="preview_db_body"></tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal">Close</button>
+          <button type="submit" id="btn_import" class="btn btn-success btn-sm">Import</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
 
 <!-- Modal -->
 <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static">
@@ -301,6 +460,10 @@
                   <option value="BOX">BOX</option>
                 </select>
               </div>
+            </div>
+            <div class="form-group">
+              <label>Kelipatan :</label>
+              <input type="number" name="step_qty" id="step_qty" class="form-control form-control-sm">
             </div>
             <div class="col-md-4">
               <div class="form-group">
@@ -388,6 +551,7 @@
           $('#keterangan').val(response.keterangan);
           $('#barang').val(response.nama);
           $('#satuan_input').val(response.satuan);
+          $('#step_qty').val(response.step_qty);
           $('#size_edit').val(response.size);
           $('#kategori').val(response.kategori);
           $('#retail').val(formatRupiah(response.retail));
@@ -501,6 +665,206 @@
   });
 </script>
 
+<script>
+$(document).ready(function(){
+
+  $('#file_input').on('change', function(){
+
+    let file = this.files[0];
+    let id_perusahaan = $('#import_perusahaan').val();
+
+    if(!file) return;
+
+    if(!id_perusahaan){
+      alert('Pilih perusahaan dulu!');
+      $('#file_input').val('');
+      return;
+    }
+
+    $('#loading_import').removeClass('d-none');
+    $('#preview_excel').addClass('d-none');
+    $('#summary_import').addClass('d-none');
+    $('#warning_import').addClass('d-none');
+
+    let formData = new FormData();
+    formData.append('file', file);
+    formData.append('id_perusahaan', id_perusahaan);
+
+    $.ajax({
+      url: '<?= base_url("Barang/preview_import") ?>',
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      dataType: 'json',
+
+      success: function(res){
+
+        $('#loading_import').addClass('d-none');
+
+        if(!res.success){
+          alert(res.error);
+          return;
+        }
+
+        let excel_html = '';
+        let db_html = '';
+
+        let total=0, baru=0, update=0, sama=0;
+
+        let items = res.data.items || [];
+
+        items.forEach(function(item){
+
+          total++;
+
+          let badge='', rowClass='';
+
+          if(item.is_new){
+            baru++;
+            badge='<span class="badge badge-primary">Baru</span>';
+            rowClass='table-primary';
+          } else if(item.changed){
+            update++;
+            badge='<span class="badge badge-warning">Update</span>';
+            rowClass='table-warning';
+          } else {
+            sama++;
+            badge='<span class="badge badge-secondary">Tidak Berubah</span>';
+            rowClass='table-light';
+          }
+
+          // EXCEL
+          excel_html += `
+          <tr class="${rowClass}">
+            <td>${badge}</td>
+            <td>${item.kode}</td>
+            <td>${item.excel.nama_perusahaan || '-'}</td>
+            <td>${item.excel.nama || '-'}</td>
+            <td>${item.excel.keterangan || '-'}</td>
+            <td>${item.excel.size || '-'}</td>
+            <td>${item.excel.satuan || '-'}</td>
+            <td>${formatRupiah(item.excel.retail)}</td>
+            <td>${formatRupiah(item.excel.grosir)}</td>
+            <td>${formatRupiah(item.excel.grosir_10)}</td>
+            <td>${formatRupiah(item.excel.het_jawa)}</td>
+            <td>${formatRupiah(item.excel.indo_barat)}</td>
+            <td>${formatRupiah(item.excel.special_price)}</td>
+            <td>${formatRupiah(item.excel.barang_x)}</td>
+          </tr>
+          `;
+
+          // DB
+          db_html += `<tr class="${rowClass}">
+            <td>${item.is_new ? 'Belum Ada' : 'Ada'}</td>
+          `;
+
+          if(item.is_new){
+
+            db_html += `
+              <td>${item.kode}</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            `;
+
+          } else {
+
+            db_html += `
+              <td>${item.db.kode}</td>
+              <td>${item.db.perusahaan || '-'}</td>
+              <td>${item.db.nama}</td>
+              <td>${item.db.keterangan}</td>
+              <td>${item.db.size}</td>
+              <td>${item.db.satuan}</td>
+              <td>${formatRupiah(item.db.retail)}</td>
+              <td>${formatRupiah(item.db.grosir)}</td>
+              <td>${formatRupiah(item.db.grosir_10)}</td>
+              <td>${formatRupiah(item.db.het_jawa)}</td>
+              <td>${formatRupiah(item.db.indo_barat)}</td>
+              <td>${formatRupiah(item.db.special_price)}</td>
+              <td>${formatRupiah(item.db.barang_x)}</td>
+            `;
+          }
+
+          db_html += `</tr>`;
+
+        });
+
+        $('#preview_excel_body').html(excel_html);
+        $('#preview_db_body').html(db_html);
+
+        $('#summary_import').removeClass('d-none').html(`
+          <b>${total}</b> data —
+          <span class="text-primary">${baru} baru</span>,
+          <span class="text-warning">${update} update</span>,
+          <span class="text-muted">${sama} sama</span>
+        `);
+
+        $('#warning_import').removeClass('d-none');
+        $('#preview_excel').removeClass('d-none');
+
+        $('#btn_import').prop('disabled', (baru === 0 && update === 0));
+      }
+    });
+
+  });
+    $('#form_import').on('submit', function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    $('#btn_import').prop('disabled', true).text('Importing...');
+
+    $.ajax({
+      url: $(this).attr('action'),
+      type: 'POST',
+      data: formData,
+      processData: false,
+      contentType: false,
+      dataType: 'json',
+
+      success: function(res){
+
+        $('#btn_import').prop('disabled', false).text('Import');
+
+        if(!res.success){
+          Swal.fire('Error', res.error, 'error');
+          return;
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Import Berhasil',
+          html: `
+            <b>${res.data.inserted}</b> data ditambahkan<br>
+            <b>${res.data.updated}</b> data diupdate
+          `
+        }).then(() => {
+          location.reload();
+        });
+
+      },
+
+      error: function(){
+        $('#btn_import').prop('disabled', false).text('Import');
+        Swal.fire('Error', 'Server error', 'error');
+      }
+    });
+
+  });
+
+});
+</script>
 <script>
   // Aktifkan semua tooltip di halaman
   const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')

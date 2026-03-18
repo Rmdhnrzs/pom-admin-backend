@@ -1,5 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
+require_once APPPATH . '../vendor/autoload.php';
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class Barang extends CI_Controller
 {
@@ -38,6 +40,8 @@ class Barang extends CI_Controller
 				'kode' => $artikel->kode_artikel,
 				'nama' => $artikel->nama_artikel,
 				'satuan' => $artikel->satuan,
+				'step_qty' => $artikel->step_qty,
+				'kelipatan_info'=> kelipatan_pesan((int)$artikel->step_qty),
 				'size' => $artikel->size,
 				'kategori' => $artikel->kategori,
 				'keterangan' => $artikel->keterangan,
@@ -73,10 +77,18 @@ class Barang extends CI_Controller
 		$data['id_perusahaan'] = $this->input->post('perusahaan');
 		$data['nama_artikel'] = $this->input->post('barang');
 		$data['satuan'] = $this->input->post('satuan');
+		$data['step_qty'] = $this->input->post('step_qty');
 		$data['size'] = $this->input->post('size');
 		$data['kategori'] = $this->input->post('kategori');
 		$data['updated_at'] = date('Y-m-d');
 		$data['id_user'] = $id_user;
+
+		$step_qty = $this->input->post('step_qty');
+		if ($step_qty < 1) {
+			tampil_alert('error', 'GAGAL', 'Kelipatan minimal 1');
+			redirect(base_url('Barang'));
+			return;
+		}
 
 		// Proses update
 		$this->db->insert('tb_barang', $data);
@@ -99,6 +111,7 @@ class Barang extends CI_Controller
 		$data['keterangan'] = $this->input->post('keterangan');
 		$data['nama_artikel'] = $this->input->post('barang');
 		$data['satuan'] = $this->input->post('satuan');
+		$data['step_qty'] = $this->input->post('step_qty');
 		$data['size'] = $this->input->post('size');
 		$data['kategori'] = $this->input->post('kategori');
 		$data['updated_at'] = date('Y-m-d');
@@ -130,5 +143,312 @@ class Barang extends CI_Controller
 		// Buat respons dalam format JSON
 		$response = array('exist' => ($result !== null));
 		echo json_encode($response);
+	}
+	// Fitur import
+	public function preview_import()
+	{
+		try {
+
+			if (!$this->session->userdata('login')) {
+				return $this->jsonError('Unauthorized');
+			}
+
+			if (empty($_FILES['file']['tmp_name'])) {
+				return $this->jsonError('File kosong');
+			}
+
+			$file = $_FILES['file'];
+
+			$allowedExt = ['xlsx', 'xls', 'csv'];
+			$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+			if (!in_array($ext, $allowedExt)) {
+				return $this->jsonError('Format file tidak didukung');
+			}
+
+			$id_perusahaan = $this->input->post('id_perusahaan');
+			$perusahaan = $this->db->get_where('tb_perusahaan', [
+				'id' => $id_perusahaan
+			])->row();
+			$nama_perusahaan = $perusahaan ? $perusahaan->nama : '-';
+
+			$excel = $this->parseBarangFile($_FILES['file']['tmp_name']);
+			$db    = $this->getBarangDB($id_perusahaan);
+
+			foreach ($excel as &$row) {
+				$row['nama_perusahaan'] = $nama_perusahaan;
+			}
+
+			$compare = $this->compareBarang($excel, $db);
+
+			return $this->jsonSuccess([
+				'total' => count($compare),
+				'items' => $compare
+			]);
+
+		} catch (\Throwable $e) {
+			return $this->jsonError($e->getMessage());
+		}
+	}
+
+	public function import()
+	{
+		try {
+
+			if (empty($_FILES['file']['tmp_name'])) {
+				return $this->jsonError('File kosong');
+			}
+
+			$file = $_FILES['file'];
+
+			$allowedExt = ['xlsx', 'xls', 'csv'];
+			$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+			if (!in_array($ext, $allowedExt)) {
+				return $this->jsonError('Format file tidak didukung');
+			}
+			$id_perusahaan = $this->input->post('id_perusahaan');
+			$id_user = $this->session->userdata('id');
+
+			$excel = $this->parseBarangFile($_FILES['file']['tmp_name']);
+			$db    = $this->getBarangDB($id_perusahaan);
+
+			$compare = $this->compareBarang($excel, $db);
+
+			$insert = [];
+			$update = 0;
+
+			foreach ($compare as $row) {
+
+				if ($row['is_new']) {
+
+				$insert[] = [
+					'kode_artikel' => $row['excel']['kode'],
+					'nama_artikel' => $row['excel']['nama'],
+					'keterangan' => $row['excel']['keterangan'],
+					'size' => $row['excel']['size'],
+					'satuan' => $row['excel']['satuan'],
+					'retail' => $row['excel']['retail'],
+					'grosir' => $row['excel']['grosir'],
+					'grosir_10' => $row['excel']['grosir_10'],
+					'het_jawa' => $row['excel']['het_jawa'],
+					'indo_barat' => $row['excel']['indo_barat'],
+					'special_price' => $row['excel']['special_price'],
+					'barang_x' => $row['excel']['barang_x'],
+					'step_qty' => ($row['excel']['step_qty'] ?? 1) > 0 ? $row['excel']['step_qty'] : 1,
+					'kategori' => ($row['excel']['barang_x'] ?? 0) > 0 ? 1 : 0,
+					'id_perusahaan' => $id_perusahaan,
+					'status' => 1,
+					'updated_at' => date('Y-m-d'),
+					'id_user' => $id_user
+				];
+
+				} elseif ($row['changed']) {
+					$data = [
+						'nama_artikel' => $row['excel']['nama'],
+						'keterangan' => $row['excel']['keterangan'],
+						'size' => $row['excel']['size'],
+						'satuan' => $row['excel']['satuan'],
+						'retail' => $row['excel']['retail'],
+						'grosir' => $row['excel']['grosir'],
+						'grosir_10' => $row['excel']['grosir_10'],
+						'het_jawa' => $row['excel']['het_jawa'],
+						'indo_barat' => $row['excel']['indo_barat'],
+						'special_price' => $row['excel']['special_price'],
+						'barang_x' => $row['excel']['barang_x'],
+						'step_qty' => ($row['excel']['step_qty'] ?? 1) > 0 ? $row['excel']['step_qty'] : 1,
+						'kategori' => ($row['excel']['barang_x'] ?? 0) > 0 ? 1 : 0,
+						'updated_at' => date('Y-m-d'),
+						'id_user' => $id_user
+					];
+
+					$this->db->update('tb_barang', $data, [
+						'kode_artikel' => $row['kode'],
+						'id_perusahaan' => $id_perusahaan
+					]);
+
+					$update++;
+				}
+			}
+
+			if ($insert) {
+				$this->db->insert_batch('tb_barang', $insert);
+			}
+
+			return $this->jsonSuccess([
+				'inserted' => count($insert),
+				'updated' => $update
+			]);
+
+		} catch (\Throwable $e) {
+			return $this->jsonError($e->getMessage());
+		}
+	}
+	private function parseBarangFile($file)
+	{
+		$reader = IOFactory::createReaderForFile($file);
+		$reader->setReadDataOnly(true);
+
+		$spreadsheet = $reader->load($file);
+		$sheet = $spreadsheet->getActiveSheet()->toArray();
+
+		$result = [];
+
+		foreach ($sheet as $i => $row) {
+
+			if ($i === 0) continue;
+			if (!isset($row[2]) || trim($row[2]) === '') continue;
+
+			$kode = $this->normalize($row[2]);
+
+			$result[$kode] = [
+				'kode' => $kode,
+				'nama' => trim($row[3] ?? ''),
+				'keterangan' => trim($row[4] ?? ''),
+				'size' => trim($row[5] ?? ''),
+				'satuan' => trim($row[6] ?? ''),
+				'retail' => $this->parseHarga($row[7] ?? 0),
+				'grosir' => $this->parseHarga($row[8] ?? 0),
+				'grosir_10' => $this->parseHarga($row[9] ?? 0),
+				'het_jawa' => $this->parseHarga($row[10] ?? 0),
+				'indo_barat' => $this->parseHarga($row[11] ?? 0),
+				'special_price' => $this->parseHarga($row[12] ?? 0),
+				'barang_x' => $this->parseHarga($row[13] ?? 0),
+				'step_qty' => (int)($row[14] ?? 1),
+			];
+		}
+
+		return $result;
+	}
+	private function parseHarga($val)
+	{
+		$val = preg_replace('/[^0-9]/', '', $val); // ambil angka saja
+		return (float)$val;
+	}
+	private function normalize($val)
+	{
+		// Hilangkan karakter aneh (non printable)
+		$val = preg_replace('/[[:^print:]]/', '', $val);
+
+		// Replace semua whitespace (tab, newline, dll) jadi 1 spasi
+		$val = preg_replace('/\s+/', ' ', $val);
+
+		// Trim + uppercase
+		return strtoupper(trim($val));
+	}
+	private function getBarangDB($id_perusahaan)
+	{
+		$rows = $this->db
+			->where('id_perusahaan', $id_perusahaan)
+			->where('status', 1)
+			->get('tb_barang')
+			->result();
+
+		$perusahaan = $this->db->get_where('tb_perusahaan', [
+			'id' => $id_perusahaan
+		])->row();
+
+		$nama_perusahaan = $perusahaan ? $perusahaan->nama : '-';
+
+		$result = [];
+
+		foreach ($rows as $r) {
+			$kode = $this->normalize($r->kode_artikel);
+
+			$result[$kode] = [
+				'id' => $r->id,
+				'kode' => $kode,
+				'nama' => $r->nama_artikel,
+				'keterangan' => $r->keterangan,
+				'size' => $r->size,
+				'satuan' => $r->satuan,
+				'retail' => $r->retail,
+				'grosir' => $r->grosir,
+				'grosir_10' => $r->grosir_10,
+				'het_jawa' => $r->het_jawa,
+				'indo_barat' => $r->indo_barat,
+				'special_price' => $r->special_price,
+				'barang_x' => $r->barang_x,
+				'step_qty' => $r->step_qty,
+				'perusahaan' => $nama_perusahaan
+			];
+		}
+
+		return $result;
+	}
+	private function compareBarang($excel, $db)
+	{
+		$result = [];
+
+		foreach ($excel as $kode => $ex) {
+
+			if (isset($db[$kode])) {
+
+				$dbRow = $db[$kode];
+				$changes = [];
+
+				foreach ($ex as $field => $val) {
+
+					if (!array_key_exists($field, $dbRow)) continue;
+
+					if (is_numeric($val)) {
+
+						if ((float)$dbRow[$field] !== (float)$val) {
+							$changes[] = $field;
+						}
+
+					} else {
+
+						$dbVal = $this->normalize($dbRow[$field]);
+						$exVal = $this->normalize($val);
+
+						if ($dbVal !== $exVal) {
+							$changes[] = $field;
+						}
+					}
+				}
+
+				$result[] = [
+					'kode'    => $kode,
+					'is_exist'=> true,
+					'is_new'  => false,
+					'changed' => !empty($changes),
+					'changes' => $changes,
+					'excel'   => $ex,
+					'db'      => $dbRow
+				];
+
+			} else {
+
+				$result[] = [
+					'kode'    => $kode,
+					'is_exist'=> false,
+					'is_new'  => true,
+					'changed' => true,
+					'changes' => array_keys($ex),
+					'excel'   => $ex,
+					'db'      => null
+				];
+			}
+		}
+
+		return $result;
+	}
+	private function jsonSuccess($data)
+	{
+		echo json_encode([
+			'success' => true,
+			'data' => $data
+		]);
+		exit;
+	}
+
+	private function jsonError($msg)
+	{
+		echo json_encode([
+			'success' => false,
+			'error' => $msg
+		]);
+		exit;
 	}
 }
