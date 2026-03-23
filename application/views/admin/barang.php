@@ -124,7 +124,9 @@
             <td data-bs-toggle="tooltip" title="<?= $k->keterangan ?>"><?= (strlen($k->keterangan) > 40 ? substr($k->keterangan, 0, 40) . '...' : $k->keterangan) ?></td>
             <td><?= $k->size ?></td>
             <td><?= $k->satuan ?></td>
-            <td><?= $k->step_qty > 1 ? 'x'.$k->step_qty : '-' ?></td>
+            <td title="Kelipatan ><?= $k->kelipatan ?>">
+              <?= $k->kelipatan ?>
+            </td>
             <td>Rp <?= number_format($k->retail) ?></td>
             <td>Rp <?= number_format($k->grosir) ?></td>
             <td>Rp <?= number_format($k->grosir_10) ?></td>
@@ -215,8 +217,7 @@
               </div>
               <div class="form-group">
                 <label>Kelipatan :</label>
-                <input type="number" name="step_qty" class="form-control form-control-sm" value="1" min="1">
-                <small class="text-muted">Contoh: 5 = hanya bisa 5,10,15</small>
+                <input type="number" name="kelipatan" class="form-control form-control-sm" value="1" min="1">
               </div>
               
             </div>
@@ -341,6 +342,7 @@
                         <th>Keterangan</th>
                         <th>Size</th>
                         <th>Satuan</th>
+                        <th>Kelipatan</th>
                         <th>Retail</th>
                         <th>Grosir</th>
                         <th>G10</th>
@@ -369,6 +371,7 @@
                         <th>Keterangan</th>
                         <th>Size</th>
                         <th>Satuan</th>
+                        <th>Kelipatan</th>
                         <th>Retail</th>
                         <th>Grosir</th>
                         <th>G10</th>
@@ -463,7 +466,7 @@
             </div>
             <div class="form-group">
               <label>Kelipatan :</label>
-              <input type="number" name="step_qty" id="step_qty" class="form-control form-control-sm">
+              <input type="number" name="kelipatan" id="kelipatan" class="form-control form-control-sm">
             </div>
             <div class="col-md-4">
               <div class="form-group">
@@ -551,7 +554,7 @@
           $('#keterangan').val(response.keterangan);
           $('#barang').val(response.nama);
           $('#satuan_input').val(response.satuan);
-          $('#step_qty').val(response.step_qty);
+          $('#kelipatan').val(response.kelipatan);
           $('#size_edit').val(response.size);
           $('#kategori').val(response.kategori);
           $('#retail').val(formatRupiah(response.retail));
@@ -720,30 +723,37 @@ $(document).ready(function(){
 
           let badge='', rowClass='';
 
-          if(item.is_new){
+          if(item.status === 'insert') {
             baru++;
             badge='<span class="badge badge-primary">Baru</span>';
             rowClass='table-primary';
-          } else if(item.changed){
+          } else if(item.status === 'update'){
             update++;
             badge='<span class="badge badge-warning">Update</span>';
             rowClass='table-warning';
-          } else {
+          } else if(item.status === 'same'){
             sama++;
-            badge='<span class="badge badge-secondary">Tidak Berubah</span>';
+            badge='<span class="badge badge-danger">Tidak Berubah</span>';
             rowClass='table-light';
+          } else if(item.status === 'invalid') {
+            badge='<span class="badge badge-secondary">Invalid</span>';
+            rowClass='table-danger';
           }
 
           // EXCEL
           excel_html += `
           <tr class="${rowClass}">
             <td>${badge}</td>
-            <td>${item.kode}</td>
-            <td>${item.excel.nama_perusahaan || '-'}</td>
+            <td>
+              ${item.kode}
+              ${item.excel.barang_x > 0 ? '<br><span class="badge badge-danger badge-sm">Barang X</span>' : ''}
+            </td>
+            <td>${$('#import_perusahaan option:selected').text()}</td>
             <td>${item.excel.nama || '-'}</td>
             <td>${item.excel.keterangan || '-'}</td>
             <td>${item.excel.size || '-'}</td>
             <td>${item.excel.satuan || '-'}</td>
+            <td>${item.excel.kelipatan || 1}</td>
             <td>${formatRupiah(item.excel.retail)}</td>
             <td>${formatRupiah(item.excel.grosir)}</td>
             <td>${formatRupiah(item.excel.grosir_10)}</td>
@@ -756,13 +766,14 @@ $(document).ready(function(){
 
           // DB
           db_html += `<tr class="${rowClass}">
-            <td>${item.is_new ? 'Belum Ada' : 'Ada'}</td>
+            <td>${item.status === 'insert' ? 'Belum Ada' : 'Ada'}</td>
           `;
 
-          if(item.is_new){
+          if(item.status === 'insert'){
 
             db_html += `
               <td>${item.kode}</td>
+              <td>-</td>
               <td>-</td>
               <td>-</td>
               <td>-</td>
@@ -780,12 +791,16 @@ $(document).ready(function(){
           } else {
 
             db_html += `
-              <td>${item.db.kode}</td>
+              <td>
+                ${item.db.kode}
+                ${item.db.barang_x > 0 ? '<br><span class="badge badge-danger badge-sm">Barang X</span>' : ''}
+              </td>
               <td>${item.db.perusahaan || '-'}</td>
               <td>${item.db.nama}</td>
               <td>${item.db.keterangan}</td>
               <td>${item.db.size}</td>
               <td>${item.db.satuan}</td>
+              <td>${item.db.kelipatan || 1}</td>
               <td>${formatRupiah(item.db.retail)}</td>
               <td>${formatRupiah(item.db.grosir)}</td>
               <td>${formatRupiah(item.db.grosir_10)}</td>
