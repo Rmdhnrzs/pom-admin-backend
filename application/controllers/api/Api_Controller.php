@@ -8,7 +8,25 @@ class Api_Controller extends CI_Controller {
 
     public function index()
     {
-        return $this->response($this->session->userdata(), 200);
+        $user = $this->session->userdata();
+        if (!$user || empty($user['login'])) {
+            return $this->response([
+                'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        return $this->response([
+            'status' => true,
+            'data' => [
+                'id'             => $user['id'],
+                'name'           => $user['name'],
+                'username'       => $user['username'],
+                'role_id'        => $user['role_id'],
+                'perusahaan_id'  => $user['perusahaan_id'],
+                'nama_perusahaan'=> $user['nama_perusahaan'],
+            ]
+        ], 200);
     }
 
     private function handleCors()
@@ -33,7 +51,8 @@ class Api_Controller extends CI_Controller {
     }
     protected function checkAuth()
     {
-        if ($this->session->userdata('login') !== true) {
+        $user = $this->session->userdata();
+        if (empty($user['login'])) {
             $this->response([
                 'status' => false,
                 'message' => 'Unauthorized'

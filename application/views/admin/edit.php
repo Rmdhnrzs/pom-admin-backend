@@ -32,7 +32,7 @@
      /* Gaya lainnya sesuai kebutuhan Anda */
  </style>
  <div class="card shadow">
-     <form action="<?= base_url('Order/update_po') ?>" method="POST">
+     <form action="<?php echo base_url('Order/update_po') ?>" method="POST">
          <header>
              <h5 class="card-header  bg-warning">Update Data Order</h5>
          </header>
@@ -41,26 +41,26 @@
                  <div class="col-md-3">
                      <div class="form-group">
                          <label><b>Nama Customer : </b></label>
-                         <textarea id="nama_customer" class="form-control form-control-sm" readonly><?= $order->nama_customer ?></textarea>
+                         <textarea id="nama_customer" class="form-control form-control-sm" readonly><?php echo $order->nama_customer ?></textarea>
                      </div>
                  </div>
                  <div class="col-md-3">
                      <div class="form-group">
                          <label><b>Nama Sales : </b></label>
-                         <input type="text" id="nama_sales" value="<?= $order->sales ?>" class="form-control form-control-sm" readonly>
-                         <input type="hidden" name="no_order" value="<?= $order->id ?>" class="form-control form-control-sm" readonly>
+                         <input type="text" id="nama_sales" value="<?php echo $order->sales ?>" class="form-control form-control-sm" readonly>
+                         <input type="hidden" name="no_order" value="<?php echo $order->id ?>" class="form-control form-control-sm" readonly>
                      </div>
                  </div>
                  <div class="col-md-3">
                      <div class="form-group">
                          <label><b>No. PO : </b></label>
-                         <input type="text" name="no_po" id="no_po" class="form-control form-control-sm" value="<?= $order->referensi ?>">
+                         <input type="text" name="no_po" id="no_po" class="form-control form-control-sm" value="<?php echo $order->referensi ?>">
                      </div>
                  </div>
                  <div class="col-md-3">
                      <div class="form-group">
                          <label><b>Tanggal PO : </b></label>
-                         <input type="date" name="tanggal" value="<?= date('Y-m-d', strtotime($order->tanggal_dibuat)); ?>" class="form-control form-control-sm" required>
+                         <input type="date" name="tanggal" value="<?php echo date('Y-m-d', strtotime($order->tanggal_dibuat)); ?>" class="form-control form-control-sm" required>
                      </div>
                  </div>
              </div>
@@ -72,6 +72,8 @@
                          <th>Artikel</th>
                          <th class="text-center" style="width:8%">Size</th>
                          <th class="text-center" style="width:9%">QTY</th>
+                         <th class="text-center">Stok</th>
+                         <th class="text-center">Sisa stok</th>
                          <th class="text-center" style="width:8%">Satuan</th>
                          <th class="text-right">Harga Satuan</th>
                          <th style="width:7%" class="text-center">Margin</th>
@@ -81,11 +83,11 @@
                  </thead>
                  <tbody>
                      <?php
-                        $no = 0;
-                        $subtotal = 0;
-                        foreach ($detail as $d) :
-                            $no++;
-                        ?>
+                         $no       = 0;
+                         $subtotal = 0;
+                         foreach ($detail as $d):
+                             $no++;
+                     ?>
                          <tr>
                              <td><?= $no ?></td>
                              <td><?= $d->kode_artikel ?></td>
@@ -94,9 +96,11 @@
                                  <?= $d->size ?>
                              </td>
                              <td class="text-center">
-                                 <input type="number" name="qty_edit[]" min="0" value="<?= $d->qty ?>" class="form-control form-control-sm qty_edit" required>
-                                 <input type="hidden" name="id_detail[]" min="0" value="<?= $d->id ?>" class="form-control form-control-sm " required>
+                                 <input type="number" name="qty_edit[]" min="0" value="<?= $d->qty ?>" class="form-control form-control-sm qty_edit item-<?= $d->id ?>" required>
+                                 <input type="hidden" name="id_detail[]" min="0" value="<?= $d->id ?>" class="form-control form-control-sm" required>
                              </td>
+                             <td class="text-center stok item-<?= $d->id ?>"><?= $d->stok ?></td>
+                             <td class="text-center sisastok item-<?= $d->id ?>"><?= $d->stok - $d->qty  ?></td>
                              <td class="text-center"><?= $d->satuan ?></td>
                              <td class="text-right harga">Rp <?= rupiah($d->harga) ?></td>
                              <td class="text-center diskonHarga"><?= $d->diskon_barang ?></td>
@@ -108,17 +112,19 @@
                              </td>
                          </tr>
                      <?php
-                            $diskonPercentage = $order->diskon; // Example: "10%"
-                            $diskonValue = (float) str_replace('%', '', $diskonPercentage);
-                            $subtotal += hitung_diskon($d->harga, $d->margin) * $d->qty;
-                            $diskon_p = $subtotal * $diskonValue / 100;
-                            $grandtotal = $subtotal - $diskon_p;
-                        endforeach ?>
+                             $diskonPercentage  = $order->diskon; // Example: "10%"
+                             $diskonValue       = (float) str_replace('%', '', $diskonPercentage);
+                             $subtotal         += hitung_diskon($d->harga, $d->margin) * $d->qty;
+                             $diskon_p          = $subtotal * $diskonValue / 100;
+                             $grandtotal        = $subtotal - $diskon_p;
+                             $totalstok = 0;
+                             $totalstok += $d->stok - $d->qty;
+                     endforeach?>
                      <tr>
-                         <td colspan="7" class="text-right"><strong>SubTotal :</strong></td>
-                         <td></td>
-                         <td class="text-right subtotal"><strong> Rp <?= rupiah($subtotal) ?></strong></td>
-                         <td></td>
+                        <td colspan="7" class="text-right"><strong>SubTotal :</strong></td>
+                        <td></td>
+                        <td class="text-right subtotal"><strong> Rp <?= rupiah($subtotal) ?></strong></td>
+                        <td></td>
                      </tr>
                      <tr>
                          <td colspan="7" class="text-right"><strong>Diskon Faktur :</strong></td>
@@ -161,7 +167,7 @@
  </div>
  <div class="modal fade modal_artikel" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
      <div class="modal-dialog ">
-         <form id="formExport" action="<?= base_url('Order/TambahArtikel') ?>" method="post">
+         <form id="formExport" action="<?php echo base_url('Order/TambahArtikel') ?>" method="post">
              <div class="modal-content">
                  <div class="modal-header text-white bg-success">
                      <h5 class="modal-title" id="exampleModalLabel">Tambah Artikel</h5>
@@ -172,9 +178,9 @@
                          <label for="">Pilih artikel :</label>
                          <select name="id_artikel" class="form-control form-control-sm list_artikel" required>
                              <option value="">- Pilih Artikel -</option>
-                             <?php foreach ($artikel as $row) : ?>
-                                 <option value="<?= $row->id ?>"><?= $row->kode_artikel ?></option>
-                             <?php endforeach ?>
+                             <?php foreach ($artikel as $row): ?>
+                                 <option value="<?php echo $row->id ?>"><?php echo $row->kode_artikel ?></option>
+                             <?php endforeach?>
                          </select>
                      </div>
                      <div class="form-group mb-0">
@@ -197,6 +203,12 @@
                          </div>
                          <div class="col-md-4">
                              <div class="form-group mb-0">
+                                 <label for="">Stok</label>
+                                 <input type="text" id="stok" class="form-control form-control-sm" readonly>
+                             </div>
+                         </div>
+                         <div class="col-md-4">
+                             <div class="form-group mb-0">
                                  <label for="">Harga</label>
                                  <input type="text" name="harga" id="harga" class="form-control form-control-sm" readonly>
                              </div>
@@ -206,7 +218,7 @@
                          <div class="col-md-6">
                              <div class="form-group mb-0">
                                  <label for="">Qty</label>
-                                 <input type="number" name="qty" id="qty" class="form-control form-control-sm" required>
+                                 <input type="number" min="0" name="qty" id="qty" class="form-control form-control-sm" required>
                              </div>
                          </div>
                          <div class="col-md-6">
@@ -245,10 +257,13 @@
                  },
                  dataType: "json",
                  success: function(response) {
+                     $('#qty').prop('disabled', false);
                      $('#size').val(response.size);
                      $('#nama_artikel').val(response.nama_artikel);
+                     $('#qty').val(0);
                      $('#satuan').val(response.satuan);
                      $('#harga').val(response.harga);
+                     $('#stok').val(response.stok);
                  }
              });
 
@@ -257,6 +272,23 @@
          $('.qty_edit').on('input', function() {
              updateTotalHarga($(this));
              updateGrandtotal($(this));
+             updateStokTotal($(this));
+         });
+         $('#qty').on('input', function (){
+            var stok = parseInt($('#stok').val());
+            var value = parseInt($(this).val());
+
+            if (value > stok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: 'Kuantitas order tidak boleh melebihi jumlah stok barang!',
+                    confirmButtonText: 'OK'
+                });
+                $(this).prop('disabled', true);
+            } else {
+                $(this).prop('disabled', false);
+            }
          });
 
          $("#diskonFaktur").change(function() {
@@ -354,4 +386,23 @@
          var grandtotal = Math.round(diskonDetail(parseInt(subtotal), diskon));
          $(".grandtotal").text(formatRupiah(grandtotal));
      };
+ </script>
+ <script>
+    function updateStokTotal(inputElement) {
+        var itemClass = inputElement[0].classList[3];
+        var stok = parseInt($(`.stok.${itemClass}`).text());
+        var qty_edit = parseInt(inputElement.val());
+        var result = stok - qty_edit;
+        if (result < 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Kuantitas order tidak boleh melebihi jumlah stok barang!',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            $(`.sisastok.${itemClass}`).text(result);
+            $(`.sisastok.${itemClass}`).addClass('bg-warning');
+        }
+    }
  </script>

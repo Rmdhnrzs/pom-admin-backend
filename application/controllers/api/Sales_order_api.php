@@ -32,7 +32,7 @@ class Sales_order_api extends Api_Controller {
 
         $tipe = $this->getPriceType($tipe_customer, $tipe_po);
 
-        $produk = $this->db->query("SELECT id, TRIM(kode_artikel) as kode_artikel, nama_artikel, satuan, $tipe as harga, size, stok from tb_barang where $tipe > 0 and status=1 and id_perusahaan = '$perusahaan_id' order by kode_artikel")->result();
+        $produk = $this->db->query("SELECT id, TRIM(kode_artikel) as kode_artikel, nama_artikel, satuan, $tipe as harga, size, stok, kelipatan from tb_barang where $tipe > 0 and status=1 and id_perusahaan = '$perusahaan_id' order by kode_artikel")->result();
 
         return $this->response([
             'status' => true,
@@ -104,8 +104,8 @@ class Sales_order_api extends Api_Controller {
         $pt = $this->input->get('perusahaan_id');
         $id_user = $this->input->get('id_user');
 
-        $data_history = $this->db->query("SELECT tb_order.id, tb_order.status, tb_customer.nama_customer, tb_order.tanggal_dibuat, tb_order.jenis from tb_order join tb_customer on tb_customer.id = tb_order.id_customer where tb_order.id_user = '$id_user' and date(tanggal_dibuat) = '$tanggal' and tb_order.id_perusahaan = '$pt' order by tb_order.tanggal_dibuat desc")->result();
-
+        $data_history = $this->db->query("SELECT tb_order.id, tb_order.status, tb_customer.nama_customer, tb_order.tanggal_dibuat, tb_order.jenis as tipe_po from tb_order join tb_customer on tb_customer.id = tb_order.id_customer where tb_order.id_user = '$id_user' and date(tanggal_dibuat) = '$tanggal' and tb_order.id_perusahaan = '$pt' order by tb_order.tanggal_dibuat desc")->result();
+        
         return $this->response([
             'status' => true,
             'tanggal' => $tanggal,
@@ -156,7 +156,10 @@ class Sales_order_api extends Api_Controller {
                 'catatan' => $data_order->catatan,
                 'alasan' => $data_order->alasan,
                 'status' => $data_order->status,
-                'details' => $data_order_detail
+                'total_harga' => array_sum(array_map(function ($data) {
+                    return $data->harga;
+                }, $data_order_detail)),
+                'details' => $data_order_detail,
             ]
         ], 200);
     }

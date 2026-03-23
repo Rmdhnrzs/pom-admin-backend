@@ -94,8 +94,6 @@
               <td style="width: 30%;"><b>Nama Sales</b></td>
               <td>: <?= $order->sales ?></td>
             </tr>
-            
-            
           </table>
         </div>
       </div>
@@ -107,6 +105,8 @@
             <th>Artikel</th>
             <th style="width:8%" class="text-center">Size</th>
             <th style="width:7%" class="text-center">QTY</th>
+            <th style="width:4%" class="text-center">Stok</th>
+            <th style="width:8%" class="text-center">Sisa stok</th>
             <th style="width:8%" class="text-center">Satuan</th>
             <th style="width:12%" class="text-right">Harga Satuan</th>
             <th style="width:7%" class="text-center">Margin</th>
@@ -128,6 +128,20 @@
                 <?= $d->size ?>
               </td>
               <td class="text-center"><?= $d->qty ?></td>
+              <td class="text-center">
+                <?php if($d->order_status): ?>
+                    -
+                  <?php else: ?>
+                    <?= $d->stok ?>
+                <?php endif; ?>
+              </td>
+              <td class="text-center">
+                <?php if($d->order_status): ?>
+                  -
+                <?php else: ?>
+                  <?= $d->stok - $d->qty ?>
+                <?php endif; ?>
+              </td>
               <td class="text-center"><?= $d->satuan ?></td>
               <td class="text-right">Rp <?= rupiah($d->harga) ?></td>
               <td class="text-center"><?= $d->diskon_barang ?></td>
@@ -140,24 +154,25 @@
             $subtotal += $total;
             $diskon_p = $subtotal * $diskonValue / 100;
             $grandtotal = $subtotal - $diskon_p;
+            $stoktotal = ($d->stok - $d->qty);
           endforeach ?>
           <tr>
-            <td colspan="7" class="text-right"><strong>SubTotal :</strong></td>
+            <td colspan="9" class="text-right"><strong>SubTotal :</strong></td>
             <td></td>
             <td class="text-right"><strong> Rp. <?= rupiah($subtotal) ?></strong></td>
           </tr>
           <tr>
-            <td colspan="7" class="text-right"><strong>Diskon :</strong></td>
+            <td colspan="9" class="text-right"><strong>Diskon :</strong></td>
             <td class="text-center"><?= $order->diskon ?></td>
             <td class="text-right">Rp. <?= rupiah($subtotal * $diskonValue / 100) ?></td>
           </tr>
           <tr>
-            <td colspan="7" class="text-right"><strong>GrandTotal :</strong></td>
+            <td colspan="9" class="text-right"><strong>GrandTotal :</strong></td>
             <td></td>
             <td class="text-right"><strong>Rp. <?= rupiah($grandtotal) ?></strong></td>
           </tr>
           <tr>
-            <td colspan="3">
+            <td colspan="5">
               Catatan : <br> <?= nl2br(htmlspecialchars($order->catatan)) ?>
             </td>
             <td colspan="3">
@@ -166,10 +181,13 @@
             </td>
             <td colspan="3" class="text-right">
               <?php
-              $badge_class = $grandtotal >= $order->minimum_order ? 'success' : 'danger';
-              $badge_text = $grandtotal >= $order->minimum_order ? 'SUDAH MEMENUHI MIN. PO' : 'BELUM MEMENUHI MIN. PO';
-              echo "<span class='badge badge-$badge_class'>$badge_text</span>";
+              $min_po_badge =  $grandtotal >= $order->minimum_order ? 'success' : 'danger';
+              $min_po_text =  $grandtotal >= $order->minimum_order ? 'SUDAH MEMENUHI MIN. PO' : 'BELUM MEMENUHI MIN. PO';
+              $min_stok_badge = $stoktotal < 0? 'danger' : 'success';
+              $min_stok_text = $stoktotal < 0? 'JUMLAH KUANTITAS MELEBIHI JUMLAH STOK' : 'JUMLAH KUANTITAS MEMENUHI STOK';
               ?>
+              <span class="badge badge-<?= $min_po_badge ?>"><?= $min_po_text ?></span>
+              <span class="badge badge-<?= $min_stok_badge ?>"><?= $min_stok_text ?></span>
             </td>
           </tr>
         </tbody>

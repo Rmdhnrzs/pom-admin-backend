@@ -40,7 +40,6 @@
                   <a class="nav-link" href="<?= base_url('User') ?>"><i class="fas fa-user"></i> User</a>
                 </li>
               <?php } ?>
-
               <li class="nav-item <?= ($title == 'Gudang') ? 'active' : '' ?>">
                 <a class="nav-link" href="<?= base_url('Gudang') ?>">
                   <i class="fas fa-file-excel"></i> Gudang

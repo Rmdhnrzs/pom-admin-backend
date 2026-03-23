@@ -39,7 +39,7 @@ class Order extends CI_Controller
 		$data['order'] = $this->db->query("SELECT td.*,tc.margin, tc.nama_customer, tc.alamat,tc.tipe_harga, tu.nama as sales, tc.minimum_order, tc.tipe_harga from tb_order td
 		join tb_customer tc on td.id_customer = tc.id
 		left join tb_user tu on td.id_user = tu.id where td.id ='$id'")->row();
-		$data['detail']	= $this->db->query("SELECT tod.*, tb.kode_artikel,tb.nama_artikel,tb.satuan,tb.size,tc.margin, td.diskon from tb_order_detail tod
+		$data['detail']	= $this->db->query("SELECT tod.*, tb.kode_artikel,tb.nama_artikel,tb.satuan,tb.size,tb.stok,tc.margin,td.diskon from tb_order_detail tod
 		join tb_order td on tod.id_order = td.id
 		join tb_barang tb on tod.id_barang = tb.id
 		join tb_customer tc on td.id_customer = tc.id where tod.id_order = '$id' order by tod.id
@@ -77,7 +77,7 @@ class Order extends CI_Controller
 			$tipe = "barang_x";
 		}
 		// Mengambil data artikel dari tabel tb_barang berdasarkan id_barang
-		$artikel = $this->db->query("SELECT id,size, kode_artikel, nama_artikel, satuan, $tipe as harga from tb_barang where id = '$id_artikel'")->row();
+		$artikel = $this->db->query("SELECT id,size, kode_artikel, nama_artikel, satuan, stok, $tipe as harga from tb_barang where id = '$id_artikel'")->row();
 		header('Content-Type: application/json'); // Tambahkan header untuk menandakan bahwa respons adalah JSON
 
 		// Jika data artikel ditemukan, kirimkan objek JSON dengan atribut-artibut yang diperlukan
@@ -88,6 +88,7 @@ class Order extends CI_Controller
 				'satuan' => $artikel->satuan,
 				'size' => $artikel->size,
 				'harga' => $artikel->harga,
+				'stok' => $artikel->stok,
 			);
 			echo json_encode($response);
 		} else {
@@ -133,7 +134,7 @@ class Order extends CI_Controller
 		join tb_customer tc on td.id_customer = tc.id
 		join tb_perusahaan tp on tp.id = tc.id_perusahaan
 		left join tb_user tu on td.id_user = tu.id where td.id ='$id'")->row();
-		$data['detail']	= $this->db->query("SELECT tod.*, tb.keterangan, tb.kode_artikel,tb.nama_artikel,tb.satuan,tb.size,tc.margin, td.diskon from tb_order_detail tod
+		$data['detail']	= $this->db->query("SELECT tod.*, tb.keterangan, tb.kode_artikel,tb.nama_artikel, tb.stok, tb.satuan,tb.size,tc.margin, td.diskon, td.status as order_status from tb_order_detail tod
 		join tb_order td on tod.id_order = td.id
 		join tb_barang tb on tod.id_barang = tb.id
 		join tb_customer tc on td.id_customer = tc.id where tod.id_order = '$id' order by tod.id
@@ -363,12 +364,11 @@ class Order extends CI_Controller
 		$no_urut	= $this->input->post('no_urut');
 		
 		// Get invoice data from the model
-		$query = $this->db->query("SELECT td.*, tc.no_pelanggan, tc.nama_customer, tc.termasuk_pajak, tb.kode_artikel,tb.satuan, tod.qty, tod.harga, tod.diskon_barang FROM tb_order td
+		$query = $this->db->query("SELECT td.*, tc.no_pelanggan, tc.nama_customer, tc.termasuk_pajak, tb.kode_artikel,tb.satuan, tod.qty, tb.id as id_barang, tb.stok as stok_barang, tod.harga, tod.diskon_barang FROM tb_order td
         JOIN tb_order_detail tod ON td.id = tod.id_order
         JOIN tb_customer tc ON td.id_customer = tc.id
         JOIN tb_barang tb ON tod.id_barang = tb.id
         WHERE td.id = '$id_order'");
-
         // buat nomer faktur
 		$tahunBulan = date('Y-m', strtotime('tomorrow'));
 		$id_perusahaan = $query->row()->id_perusahaan;
@@ -390,11 +390,11 @@ class Order extends CI_Controller
 		$where = array(
 			'id'	=> $id_order
 		);
+		
 		$this->db->update('tb_order', $data, $where);
-
 		if ($query->num_rows() > 0) {
+			$isStokBelowZero = false;
 			$invoiceData = $query->row(); // Assuming you want to fetch a single row
-
 			$detail = $query->result(); // Assuming you want to fetch a single row
 			$tanggalObj = new DateTime($invoiceData->tanggal_dibuat);
 			$tanggalFormatted = $tanggalObj->format('d/m/Y');
@@ -482,9 +482,24 @@ class Order extends CI_Controller
 				$worksheet->setCellValue('Y' . $row, "Non Department");
 				$worksheet->setCellValue('Z' . $row, "Non Project");
 
+				$remainingStok = $data->stok_barang - $data->qty;
+				if ((int) $remainingStok < 0) {
+					$isStokBelowZero = true;
+					break;
+				}
+
+				$this->db->update('tb_barang', [
+					'stok' => $remainingStok
+				], [
+					'id' => $data->id_barang
+				]);
+
 				$row++;
 			}
-
+				
+			if ($isStokBelowZero){
+				tampil_alert('error', 'GAGAL', 'Hasil pengurangan Stok tidak boleh dibawah 0');
+			}
 			// Create Excel writer
 			$writer = new Xlsx($spreadsheet);
 

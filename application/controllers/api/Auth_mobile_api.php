@@ -13,7 +13,7 @@ class Auth_Mobile_Api extends Api_Controller
     {
         return $this->response($this->session->userdata(), 200);
     }
-# Coba tambahkan ini sementara di atas fungsi login() untuk verifikasi
+    # Coba tambahkan ini sementara di atas fungsi login() untuk verifikasi
     public function login()
     {
         if ($this->input->method() !== 'post') {
@@ -50,6 +50,7 @@ class Auth_Mobile_Api extends Api_Controller
                 ], 404);
             }
 
+            $expiry = time() + $this->config->item('sess_expiration'); // CI session expiry config
             $user_data = $user->row();
             $data = [
                 'id' => $user_data->id,
@@ -59,6 +60,7 @@ class Auth_Mobile_Api extends Api_Controller
                 'perusahaan_id' => $perusahaan->id,
                 'nama_perusahaan' => $perusahaan->nama,
                 'login' => true,
+                'expiry' => $expiry,
             ];
             $this->session->set_userdata($data);
 
@@ -70,7 +72,8 @@ class Auth_Mobile_Api extends Api_Controller
                     'name' => $user_data->nama,
                     'role_id' => $user_data->id_role,
                     'perusahaan_id' => $perusahaan->id,
-                    'nama_perusahaan' => $perusahaan->nama
+                    'nama_perusahaan' => $perusahaan->nama,
+                    'expiry_at' => $expiry,
                 ]
             ], 200);
         } else {
