@@ -56,7 +56,7 @@ class Keranjang extends CI_Controller {
 			} elseif($tipe_po == 3) {
 				$tipe = "barang_x";
 			}
-			$data_produk = $this->db->query("SELECT id, kode_artikel, nama_artikel, satuan, $tipe as harga, size from tb_barang where id = '$id_barang' ")->row();
+			$data_produk = $this->db->query("SELECT id, kode_artikel, nama_artikel, satuan, kelipatan, $tipe as harga, size from tb_barang where id = '$id_barang' ")->row();
 			$harga = $data_produk->harga;
 			$diskon = $k['diskon'];
 			$harga_diskon = hitung_diskon($harga,$diskon);
@@ -66,6 +66,7 @@ class Keranjang extends CI_Controller {
 			$nama_artikel = $data_produk->nama_artikel;
 			$kode_artikel = $data_produk->kode_artikel;
 			$satuan = $data_produk->satuan;
+			$kelipatan = $data_produk->kelipatan;
 			$size = $data_produk->size;
 			$data_list[] = (object) array(
 				'rowid' => $k['rowid'],
@@ -74,6 +75,7 @@ class Keranjang extends CI_Controller {
 				'nama_artikel' => $nama_artikel,
 				'harga' => $harga,
 				'satuan' => $satuan,
+				'kelipatan' => $kelipatan,
 				'size' => $size,
 				'qty' => $qty,
 				'diskon' => $diskon,
@@ -107,6 +109,50 @@ class Keranjang extends CI_Controller {
 		        'rowid' => $rowid,
 		        'qty'   => $qty
 			);
+		}
+
+		$item = null;
+		foreach ($this->cart->contents() as $c) {
+			if ($c['rowid'] == $rowid) {
+				$item = $c;
+				break;
+			}
+		}
+
+		if (!$item) {
+			echo json_encode([
+				'status' => 0,
+				'error' => 'Item tidak ditemukan'
+			]);
+			return;
+		}
+
+		$produk = $this->db->select('kelipatan')
+							->where('id', $item['id'])
+							->get('tb_barang')
+							->row();
+
+		$kelipatan = max(1, (int)($produk->kelipatan ?? 1));
+
+		if (!kelipatan_validasi($qty, $kelipatan)) {
+
+			$suggest = kelipatan_suggest($qty, $kelipatan);
+
+			echo json_encode([
+				'status' => 0,
+				'error' => kelipatan_pesan($kelipatan),
+				'suggestion' => $suggest
+			]);
+			return;
+		}
+
+		$data = [
+			'rowid' => $rowid,
+			'qty' => $qty,
+		];
+
+		if ($diskon) {
+			$data['diskon'] = $diskon;
 		}
 		
 		$update = $this->cart->update($data);

@@ -1,3 +1,101 @@
+<style>
+.qty-control__inner {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1.5px solid #dee2e6;
+  border-radius: 50px;
+  overflow: hidden;
+  height: 48px;
+  transition: border-color 0.2s;
+}
+
+.qty-control__btn {
+  width: 52px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-control__btn--minus { color: #dc3545; }
+.qty-control__btn--plus  { color: #28a745; }
+
+.qty-control__btn:active { background: #f0f0f0; }
+
+.qty-control__display {
+  flex: 1;
+  text-align: center;
+  border-left: 1px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  user-select: none;
+}
+
+.qty-control__value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #212529;
+  transition: transform 0.1s;
+}
+
+.qty-control__satuan {
+  font-size: 9px;
+  color: #adb5bd;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* States */
+.qty-control--loading .qty-control__inner {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.qty-control--success .qty-control__inner {
+  border-color: #28a745;
+}
+.qty-control--error .qty-control__inner {
+  border-color: #dc3545;
+}
+.qty-control--min .qty-control__btn--minus {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* Bump animation saat qty berubah */
+.qty-control__value.bump {
+  transform: scale(1.3);
+}
+
+.qty-control__feedback {
+  font-size: 11px;
+  margin-top: 3px;
+  text-align: center;
+  min-height: 16px;
+}
+
+/* Badge kelipatan */
+.badge-kelipatan {
+  font-size: 10px;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 4px;
+}
+</style>
 <div class="card" style="height:95vh; overflow:hidden;">
   <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -17,11 +115,51 @@
             <p><?= $p->nama_artikel  ?></p>
             <p><?= "Rp. " . rupiah($p->harga) . "/" . $p->satuan ?></p>
             <div class="row">
-              <div class="form-group col">
-                <label for="">Qty</label>
-                <input name="qty" type="number" class="form-control" value="<?= $p->qty ?>">
-                <input name="rowid" type="hidden" class="form-control" value="<?= $p->rowid ?>">
+            <div class="form-group col">
+              <?php
+              $kelipatan = (int)($p->kelipatan ?? 1);
+              $kelipatan = max(1, $kelipatan);
+              // Pastikan qty awal valid (kelipatan)
+              $qty = (int)($p->qty ?? $kelipatan);
+              if ($kelipatan > 1 && $qty % $kelipatan !== 0) {
+                $qty = (int)(ceil($qty / $kelipatan) * $kelipatan);
+              }
+              $qty = max($qty, $kelipatan);
+              ?>
+
+              <label class="mb-1">
+                <span>Qty</span>
+                <?php if ($kelipatan > 1): ?>
+                  <span class="badge-kelipatan">
+                    <i class="fas fa-layer-group"></i> ×<?= $kelipatan ?>
+                  </span>
+                <?php endif; ?>
+              </label>
+
+              <div class="qty-control"
+                data-kelipatan="<?= $kelipatan ?>"
+                data-rowid="<?= $p->rowid ?>"
+                data-satuan="<?= $p->satuan ?>">
+
+                <div class="qty-control__inner">
+                  <button type="button" class="qty-control__btn qty-control__btn--minus">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                  <div class="qty-control__display">
+                    <span class="qty-control__value"><?= $qty ?></span>
+                    <span class="qty-control__satuan"><?= $p->satuan ?></span>
+                  </div>
+                  <button type="button" class="qty-control__btn qty-control__btn--plus">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+
+                <input type="hidden" name="qty"   class="qty-control__input" value="<?= $qty ?>">
+                <input type="hidden" name="rowid" value="<?= $p->rowid ?>">
+
+                <div class="qty-control__feedback"></div>
               </div>
+            </div>
               <?php if ($tipe_po != 1) { ?>
               <div class="form-group col-6">
                 <label for="">Diskon</label>
@@ -246,36 +384,143 @@
 </script>
 
 <script>
-  $("[name='qty']").on("focus", function() {
-    var card = $(this).closest(".card");
-    const qty = card.find("[name='qty']").val();
-    const diskon = card.find("select[name='diskon']").val();
-    const rowid = card.find("[name='rowid']").val();
+function kelipatanNext(qty, step) {
+  if (step <= 1) return qty + 1;
+  return Math.ceil((qty + 1) / step) * step;
+}
 
-    $(this).change(function() {
-      var editQty = card.find("[name='qty']").val();
-      var editDiskon = card.find("select[name='diskon']").val();
-      var editRowid = card.find("[name='rowid']").val();
+function kelipatanPrev(qty, step) {
+  if (step <= 1) return Math.max(1, qty - 1);
+  return Math.max(step, Math.floor((qty - 1) / step) * step);
+}
+
+var QtyControl = {
+
+  _timer: {},   
+
+  init: function () {
+    $(document).on('click', '.qty-control__btn--plus', function () {
+      QtyControl.step($(this).closest('.qty-control'), 1);
+    });
+    $(document).on('click', '.qty-control__btn--minus', function () {
+      QtyControl.step($(this).closest('.qty-control'), -1);
+    });
+  },
+
+  step: function ($ctrl, direction) {
+    var kelipatan = parseInt($ctrl.data('kelipatan')) || 1;
+    var input     = $ctrl.find('.qty-control__input');
+    var current   = parseInt(input.val()) || kelipatan;
+
+    var newQty;
+    if (direction > 0) {
+      newQty = kelipatanNext(current, kelipatan);
+    } else {
+      newQty = kelipatanPrev(current, kelipatan);
+    }
+
+
+    if (newQty < kelipatan) newQty = kelipatan;
+
+    QtyControl._applyAndSync($ctrl, newQty);
+  },
+
+  _applyAndSync: function ($ctrl, newQty) {
+    var input     = $ctrl.find('.qty-control__input');
+    var display   = $ctrl.find('.qty-control__value');
+    var kelipatan = parseInt($ctrl.data('kelipatan')) || 1;
+    var rowid     = $ctrl.data('rowid');
+    var oldQty    = parseInt(input.val());
+
+    // Validasi kelipatan sebelum apply
+    if (kelipatan > 1 && newQty % kelipatan !== 0) {
+      QtyControl._feedback($ctrl, 'Qty harus kelipatan ' + kelipatan, 'danger');
+      return;
+    }
+
+
+    input.val(newQty);
+    QtyControl._bumpDisplay(display, newQty);
+    QtyControl._checkMin($ctrl, newQty, kelipatan);
+    QtyControl.setLoading($ctrl, true);
+
+    clearTimeout(QtyControl._timer[rowid]);
+    QtyControl._timer[rowid] = setTimeout(function () {
+
+      var diskon = $ctrl.closest('.card').find("select[name='diskon']").val() || '0%';
+
       $.ajax({
         type: "POST",
         url: "<?= base_url('Keranjang/edit_item') ?>",
-        data: {
-          qty: editQty,
-          diskon: editDiskon,
-          rowid: editRowid
-        },
+        data: { qty: newQty, diskon: diskon, rowid: rowid },
         dataType: "json",
-        success: function(response) {
+        success: function () {
+          QtyControl.setLoading($ctrl, false);
+          QtyControl._flashState($ctrl, 'success');
           subtotal();
         },
-        error:function(){
-          card.find("[name='qty']").val(qty);
-          card.find("select[name='diskon']").val(diskon);
-          card.find("[name='rowid']").val(rowid);
+        error: function () {
+          // Rollback
+          input.val(oldQty);
+          QtyControl._bumpDisplay(display, oldQty);
+          QtyControl._checkMin($ctrl, oldQty, kelipatan);
+          QtyControl.setLoading($ctrl, false);
+          QtyControl._flashState($ctrl, 'error');
+          QtyControl._feedback($ctrl, 'Gagal menyimpan, coba lagi', 'danger');
         }
       });
-    });
+
+    }, 300);
+  },
+
+  setLoading: function ($ctrl, state) {
+    $ctrl.toggleClass('qty-control--loading', state);
+  },
+
+  _bumpDisplay: function ($el, val) {
+    $el.text(val).addClass('bump');
+    setTimeout(function () { $el.removeClass('bump'); }, 150);
+  },
+
+  _checkMin: function ($ctrl, qty, kelipatan) {
+    $ctrl.toggleClass('qty-control--min', qty <= kelipatan);
+  },
+
+  _flashState: function ($ctrl, state) {
+    $ctrl.addClass('qty-control--' + state);
+    setTimeout(function () {
+      $ctrl.removeClass('qty-control--success qty-control--error');
+    }, 800);
+  },
+
+  _feedback: function ($ctrl, msg, type) {
+    var $fb = $ctrl.find('.qty-control__feedback');
+    $fb.removeClass('text-danger text-success text-muted')
+       .addClass('text-' + type)
+       .text(msg);
+    clearTimeout($ctrl.data('fbTimer'));
+    $ctrl.data('fbTimer', setTimeout(function () {
+      $fb.text('');
+    }, 2500));
+  },
+
+
+  setValue: function ($ctrl, newQty) {
+    QtyControl._applyAndSync($ctrl, newQty);
+  }
+};
+
+$(document).ready(function () {
+  QtyControl.init();
+
+  // Set state min pada load awal
+  $('.qty-control').each(function () {
+    var $ctrl     = $(this);
+    var kelipatan = parseInt($ctrl.data('kelipatan')) || 1;
+    var qty       = parseInt($ctrl.find('.qty-control__input').val()) || kelipatan;
+    QtyControl._checkMin($ctrl, qty, kelipatan);
   });
+});
 </script>
 
 <script>
