@@ -33,7 +33,8 @@ class Api_Controller extends CI_Controller {
     {
         $allowedOrigins = [
             "http://localhost:5173",
-            "http://192.168.17.132:5173"
+            // "http://192.168.17.132:5173",
+            "http://192.168.17.106:5173",
         ];
 
         if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {

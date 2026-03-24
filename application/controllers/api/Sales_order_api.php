@@ -74,8 +74,6 @@ class Sales_order_api extends Api_Controller {
             ], 405);
         }
 
-        // $this->checkAuth();
-
         $id_perusahaan = $this->input->get('perusahaan_id');
         $customer = $this->db->query("SELECT * from tb_customer where id_perusahaan = '$id_perusahaan' order by nama_customer")->result();
 
@@ -112,7 +110,6 @@ class Sales_order_api extends Api_Controller {
             'data' => $data_history
         ], 200);
     }
-
     public function history_detail()
     {
         if ($this->input->method() !== 'get') {
@@ -142,7 +139,7 @@ class Sales_order_api extends Api_Controller {
             ], 404);
         }
 
-        $data_order_detail = $this->db->query("SELECT tb_barang.kode_artikel, tb_barang.satuan, tb_order_detail.qty, tb_order_detail.harga, tb_order_detail.diskon_barang from tb_order join tb_order_detail on tb_order_detail.id_order = tb_order.id join tb_barang on tb_barang.id = tb_order_detail.id_barang where tb_order.id = '$id' order by tb_order.tanggal_dibuat")->result();
+        $data_order_detail = $this->db->query("SELECT tb_barang.kode_artikel, tb_barang.nama_artikel, tb_barang.satuan, tb_order_detail.qty, tb_order_detail.harga, tb_order_detail.diskon_barang from tb_order join tb_order_detail on tb_order_detail.id_order = tb_order.id join tb_barang on tb_barang.id = tb_order_detail.id_barang where tb_order.id = '$id' order by tb_order.tanggal_dibuat")->result();
 
         return $this->response([
             'status' => true,
@@ -156,10 +153,41 @@ class Sales_order_api extends Api_Controller {
                 'catatan' => $data_order->catatan,
                 'alasan' => $data_order->alasan,
                 'status' => $data_order->status,
-                'total_harga' => array_sum(array_map(function ($data) {
-                    return $data->harga;
+                'total_harga' => array_sum(array_map(function ($item) {
+                    $total = $item->harga * $item->qty;
+                    $diskon = 0;
+                    if (strpos($item->diskon_barang, "+") !== false) {
+                        $explode_diskon = explode('+', $item->diskon_barang);
+                        foreach ($explode_diskon as $value) {
+                            $diskon = intval($value);
+                            $total -= $total * $diskon / 100;
+                        }
+                    } else {
+                        $diskon = intval($item->diskon_barang);
+                        $total -= $total * $diskon / 100;
+                    }
+                    return round($total);
                 }, $data_order_detail)),
-                'details' => $data_order_detail,
+                'details' => array_map(function ($item) {
+                    $subtotal = $item->harga * $item->qty;
+                    $diskon = 0;
+                    if (strpos($item->diskon_barang, "+") !== false) {
+                        $explode_diskon = explode('+', $item->diskon_barang);
+                        foreach ($explode_diskon as $value) {
+                            $diskon = intval($value);
+                            $subtotal -= $subtotal * $diskon / 100;
+                        }
+                    } else {
+                        $diskon = intval($item->diskon_barang);
+                        $subtotal -= $subtotal * $diskon / 100;
+                    }
+                    return array_merge(
+                        (array)$item,
+                        ['qty' => (int)$item->qty],
+                        ['harga' => (int)$item->harga],
+                        ['subtotal' => round($subtotal)]
+                    );
+                }, $data_order_detail),
             ]
         ], 200);
     }

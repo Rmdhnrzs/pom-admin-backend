@@ -12,7 +12,6 @@ class Keranjang extends CI_Controller {
 
 	public function index()
 	{
-		var_dump($this->cart->contents());
 		$id_customer = $this->session->userdata('id_customer');
 		$tipe_customer = $this->session->userdata('tipe_customer');
 		$nama_customer = $this->session->userdata('nama_customer');

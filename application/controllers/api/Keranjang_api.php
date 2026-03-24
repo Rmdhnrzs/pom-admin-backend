@@ -43,8 +43,8 @@ class Keranjang_Api extends Api_Controller {
     //   items[1][id_barang] : int
     //   ...
     // -----------------------------------------------------------------------
-	private function sub_total ($harga, $qty, $diskonStr) {
-		$total = $harga * $qty;
+	private function sub_total ($harga, $diskonStr) {
+		$total = $harga;
 		$diskon = 0;
 		if (strpos($diskonStr, "+") !== false) {
 			$explode_diskon = explode('+', $diskonStr);
@@ -132,7 +132,7 @@ class Keranjang_Api extends Api_Controller {
             $resolved_items[] = [
                 'id_barang' => $id_barang,
                 'qty'       => (int)$qty,
-                'harga'     => $this->sub_total($produk->harga, $qty, $diskon),  // always from DB
+                'harga'     => $this->sub_total($produk->harga, $diskon),  // always from DB
                 'diskon'    => $diskon,
             ];
         }
