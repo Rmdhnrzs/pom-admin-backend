@@ -11,44 +11,146 @@
   .btn_tambah {
     margin-bottom: 10px;
   }
-</style>
+  .modal-content {
+    border-radius: 12px;
+    border: none;
+  }
 
-<div class="card shadow">
-  <h5 class="card-header text-white bg-info">Daftar Sales Order</h5>
+  .modal-header {
+    border-bottom: none;
+  }
+
+  .modal-footer {
+    border-top: none;
+  }
+
+  .table td {
+  font-size: 12px;
+  vertical-align: middle;
+  }
+
+  .table thead th {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .table-responsive {
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+    border-radius: 8px;
+  }
+
+  .custom-card {
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .custom-header {
+    background: #f1f1f1;
+    padding: 14px 18px;
+    box-shadow: inset 0 -1px 0 #e0e0e0;
+  }
+
+  .icon-box {
+    width: 36px;
+    height: 36px;
+    background: #e7f1ff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-header h5 {
+    font-weight: 600;
+    color: #2c7be5;
+  }
+
+  .custom-header small {
+    color: #888;
+    font-size: 12px;
+  }
+
+  .action-group {
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-action {
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+</style>
+<div class="card shadow-sm custom-card">
+
+  <!-- Header -->
+  <div class="card-header custom-header d-flex justify-content-between align-items-center">
+    <!-- Kiri -->
+    <div class="d-flex align-items-center">
+      <div class="icon-box mr-3 d-flex align-items-center justify-content-center">
+        <i class="fas fa-file-invoice text-primary"></i>
+      </div>
+      <div>
+        <h5 class="mb-0">Daftar Sales Order</h5>
+        <small>Manajemen data pesanan customer</small>
+      </div>
+    </div>
+    <!-- Kanan -->
+    <div>
+      <button id="btnExport" 
+        class="btn btn-info btn-sm" 
+        data-toggle="modal" 
+        data-target=".exportSo" 
+        disabled>
+        <i class="fa fa-download"></i> Export
+      </button>
+    </div>
+
+  </div>
+
+
   <div class="card-body">
-    <!-- <div class="form-group">
-      <select id="perusahaan" class="form-control col-3">
-        <?php foreach ($perusahaan as $p) { ?>
-          <option value="<?= $p->id ?>"><?= $p->nama ?></option>
-        <?php } ?>
-      </select>
-    </div> -->
-    <table class="table table-striped" id="datatable" style="width: 100%;">
-      <thead>
-        <tr>
-          <th></th>
-          <th>PT</th>
-          <th>Customer</th>
-          <th>Tipe Harga</th>
-          <th>Jenis</th>
-          <th>Sales</th>
-          <th>No. PO</th>
-          <th>Tgl PO</th>
-          <th>Status</th>
-          <th style="width:10%">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $no = 0;
-        foreach ($detail as $d) :
-          $no++;
-        ?>
+
+    <div class="d-flex justify-content-between mb-3">
+      <div id="dt-buttons"></div>
+      <div id="dt-search"></div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped" id="datatable" style="width: 100%;">
+        <thead>
+          <tr>
+            <th class="text-center">
+              <input type="checkbox" id="check_btn">
+            </th>
+            <th>PT</th>
+            <th>Customer</th>
+            <th>Tipe Harga</th>
+            <th>Jenis</th>
+            <th>Sales</th>
+            <th>No. PO</th>
+            <th>Tgl PO</th>
+            <th>Status</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <?php foreach ($detail as $d) : ?>
           <tr>
             <td class="text-center">
-              <div class="icheck-success">
-                <input type="checkbox" name="check[]" class="centang" value="<?= $d->id ?>">
-              </div>
+              <input type="checkbox" class="centang" value="<?= $d->id ?>">
             </td>
             <td><?= strtoupper($d->nama_perusahaan) ?></td>
             <td><?= $d->nama_customer ?></td>
@@ -58,32 +160,29 @@
             <td><?= $d->referensi ?></td>
             <td><?= $d->tanggal_dibuat ?></td>
             <td><?= status_so($d->status) ?></td>
-            <td>
-              <a href="<?= base_url('Order/detail/' . $d->id) ?>" class="btn btn-info btn-sm"> <i class="fa fa-eye"></i> Detail</a>
+            <td class="text-center">
+              <div class="action-group">
+                <a href="<?= base_url('Order/detail/' . $d->id) ?>" 
+                  class="btn btn-info btn-sm btn-action">
+                  <i class="fa fa-eye"></i>
+                </a>
+              </div>
             </td>
           </tr>
-        <?php endforeach ?>
-      </tbody>
-      <tfoot>
-        <tr>
-          <td class="text-center">
-            <input type="checkbox" id="check_btn" class="flat">
-          </td>
-          <td>Pilih Semua</td>
-          <td colspan="8"><button id="btnExport" class="btn btn-sm btn-info" data-toggle="modal" data-target=".exportSo" disabled=""><i class="fa fa-download"></i> Export ke Easy Accounting</button></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+          <?php endforeach ?>
+        </tbody>
+
+      </table>
+    </div>
 </div>
 
 <div class="modal fade exportSo" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
   <div class="modal-dialog ">
     <form id="formExport" action="<?= base_url('Order/export_all') ?>" method="post">
       <div class="modal-content">
-        <div class="modal-header bg-warning">
-          <h5 class="modal-title" id="exampleModalLabel">Export SO</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close" aria-hidden="true">&times;</button>
+        <div class="modal-header bg-warning text-white">
+          <h5 class="modal-title">Export Sales Order</h5>
+          <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
         </div>
         <div class="modal-body">
           <label for="">No. Pesanan :</label>

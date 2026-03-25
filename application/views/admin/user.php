@@ -1,24 +1,133 @@
 <style>
-  .btn_tambah {
-    margin-bottom: 10px;
+  .table td {
+    font-size: 12px;
+    vertical-align: middle;
+  }
+
+  .table thead th {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    border-bottom: 2px solid #dee2e6;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .table-responsive {
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+    border-radius: 8px;
+  }
+
+  .custom-card {
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+  }
+
+  .custom-header {
+    background: #f1f1f1;
+    padding: 14px 18px;
+    box-shadow: inset 0 -1px 0 #e0e0e0;
+  }
+
+  .icon-box {
+    width: 36px;
+    height: 36px;
+    background: #e7f1ff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-header h5 {
+    font-weight: 600;
+    color: #2c7be5;
+  }
+
+  .custom-header small {
+    color: #888;
+    font-size: 12px;
+  }
+
+  .action-group {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .btn-action {
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  .badge {
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 6px;
+  }
+
+  .modal-content {
+    border-radius: 12px;
+    border: none;
+  }
+
+  .modal-header {
+    border-bottom: none;
+  }
+
+  .modal-footer {
+    border-top: none;
   }
 </style>
-<div class="card shadow">
-  <h5 class="card-header text-white bg-info">Daftar User</h5>
-  <div class="card-body">
-    <button type="button" class="btn btn-success btn-sm float-right btn_tambah" data-toggle="modal" data-target="#modal_tambah">
-      <i class="fas fa-plus"></i> Tambah User
+<div class="card shadow-sm custom-card">
+
+  <div class="card-header custom-header d-flex justify-content-between align-items-center">
+
+    <div class="d-flex align-items-center">
+      <div class="icon-box mr-3 d-flex align-items-center justify-content-center">
+        <i class="fas fa-user text-primary"></i>
+      </div>
+      <div>
+        <h5 class="mb-0">Manajemen User</h5>
+        <small>Pengaturan akun pengguna sistem</small>
+      </div>
+    </div>
+
+    <button type="button"
+      class="btn btn-success btn-sm"
+      data-toggle="modal"
+      data-target="#modal_tambah">
+      <i class="fas fa-plus"></i> Tambah
     </button>
-    <table class="table" id="datatable" style="width: 100%;">
+
+  </div>
+  <div class="card-body">
+
+  <div class="d-flex justify-content-between mb-3">
+    <div id="dt-buttons"></div>
+    <div id="dt-search"></div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped" id="datatable" style="width: 100%;">
       <thead>
         <tr>
           <th>No</th>
           <th>Nama Lengkap</th>
           <th>Username</th>
-          <th>Role</th>
-          <th>Menu</th>
+          <th class="text-center">Role</th>
+          <th class="text-center">Menu</th>
         </tr>
       </thead>
+
       <tbody>
         <?php $no = 1;
         foreach ($user as $k) { ?>
@@ -26,28 +135,42 @@
             <td><?= $no++ ?></td>
             <td><?= $k->nama ?></td>
             <td><?= $k->username ?></td>
-            <td>
+            <td class="text-center">
               <?php
               if ($k->id_role == 1) {
-                echo "<span class='badge badge-warning badge-sm'> Administrator </span>";
+                echo "<span class='badge badge-warning'>Administrator</span>";
               } else if ($k->id_role == 2) {
-                echo "<span class='badge badge-danger badge-sm'> Sales </span>";
+                echo "<span class='badge badge-danger'>Sales</span>";
               } else {
-                echo "<span class='badge badge-default badge-sm'> Tidak ada </span>";
+                echo "<span class='badge badge-secondary'>Tidak ada</span>";
               }
               ?>
             </td>
-            <td>
-              <button type="button" class="btn btn-warning btn-sm btn_edit" title="Edit Data" data-toggle="modal" data-target="#exampleModalCenter" onclick="getdetail('<?php echo $k->id; ?>')">
-                <i class="fas fa-edit"></i>
-              </button>
-              <a href="#" class="btn btn-info btn-sm " title="Reset Password" data-toggle="modal" data-target="#modal_reset" onclick="getreset('<?php echo $k->id; ?>')">
-                <i class="fas fa-key"></i>
-              </a>
-              <a href="#" class="btn btn-danger btn-sm btn_delete" title="Hapus User" data-id="<?= $k->id ?>">
-                <i class="fas fa-trash"></i>
-              </a>
-            </td>
+            <td class="text-center">
+              <div class="action-group">
+                <button type="button"
+                  class="btn btn-warning btn-sm btn-action"
+                  data-toggle="modal"
+                  data-target="#exampleModalCenter"
+                  onclick="getdetail('<?= $k->id ?>')">
+                  <i class="fas fa-edit"></i>
+                </button>
+
+                <button type="button"
+                  class="btn btn-info btn-sm btn-action"
+                  data-toggle="modal"
+                  data-target="#modal_reset"
+                  onclick="getreset('<?= $k->id ?>')">
+                  <i class="fas fa-key"></i>
+                </button>
+
+                <button
+                  class="btn btn-danger btn-sm btn-action btn_delete"
+                  data-id="<?= $k->id ?>">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+          </td>
           </tr>
         <?php } ?>
       </tbody>
@@ -108,7 +231,7 @@
   <form action="<?= base_url('User/update') ?>" method="POST">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
-        <div class="modal-header bg-warning">
+        <div class="modal-header bg-warning text-white">
           <h5 class="modal-title" id="exampleModalLongTitle">Update Data User</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>

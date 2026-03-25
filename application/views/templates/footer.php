@@ -37,5 +37,8 @@
                     'copy', 'excel', 'pdf', 'csv', 'print'
                 ]
             });
+
+            table.buttons().container().appendTo('#dt-buttons');
+            $('#datatable_filter').appendTo('#dt-search');
         });
     </script>

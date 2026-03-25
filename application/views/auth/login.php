@@ -1,51 +1,80 @@
 <body class="bg-primary">
-<?php
-if ($this->session->flashdata('type')) { ?>
-    <script>
-        var type = "<?= $this->session->flashdata('type'); ?>"
-        var title = "<?= $this->session->flashdata('title'); ?>"
-        var text = "<?= $this->session->flashdata('text'); ?>"
-        Swal.fire(title, text, type)
-    </script>
-<?php } ?>
-<div class="container mt-3">
 
-<!-- Outer Row -->
-<div class="row justify-content-center">
+<div class="container d-flex align-items-center justify-content-center" style="min-height:100vh;">
+  <div class="row w-100 justify-content-center">
 
-    <div class="col-lg-6">
-        <?php if ($this->session->flashdata('gagal')) { ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Login Gagal !</strong><br><?= $this->session->flashdata('gagal') ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+    <div class="col-md-5 col-lg-4">
+
+      <div class="card shadow border-0" style="border-radius:10px;">
+
+        <!-- Header -->
+        <div class="card-body p-4">
+
+          <div class="text-center mb-4">
+            <h4 class="font-weight-bold mb-1">LOGIN</h4>
+            <small class="text-muted">Masuk ke sistem</small>
+          </div>
+
+          <!-- Alert -->
+          <?php if ($this->session->flashdata('gagal')) { ?>
+            <div class="alert alert-danger small py-2">
+              <?= $this->session->flashdata('gagal') ?>
+            </div>
+          <?php } ?>
+
+          <!-- Form -->
+          <form action="<?= base_url('auth/login') ?>" method="POST">
+
+            <div class="form-group mb-3">
+              <label class="small text-muted">Username</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text bg-white border-right-0">
+                    <i class="fa fa-user text-primary"></i>
+                  </span>
+                </div>
+                <input type="text" name="username"
+                  class="form-control border-left-0"
+                  placeholder="Masukkan username"
+                  required>
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="small text-muted">Password</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text bg-white border-right-0">
+                    <i class="fa fa-lock text-primary"></i>
+                  </span>
+                </div>
+                <input type="password" name="password"
+                  class="form-control border-left-0"
+                  placeholder="Masukkan password"
+                  required>
+              </div>
+            </div>
+
+            <button type="submit"
+              class="btn btn-primary btn-block mt-3"
+              style="border-radius:6px; font-weight:500;">
+              LOGIN
             </button>
-        </div>
-        <?php } ?>
-        <div class="card shadow">
-            
-            <h3 class="text-center card-header">LOGIN</h3>
-            <div class="card-body">
-                <form action="<?= base_url('auth/login') ?>" method="POST">
-                    <div class="form-group">
-                        <label><i class="fa fa-user"></i> USERNAME</label>
-                        <input type="username" autocomplete="false" name="username" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fa fa-lock"></i> PASSWORD</label>
-                        <input type="password" autocomplete="false" name="password" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" class="btn btn-block btn-primary" value="LOGIN">
-                    </div>
-                </form>
-            </div>
-            <div class="card-footer text-center">
-                <small>2023 - IT Internal Globalindo Group.</small>
-            </div>
+
+          </form>
 
         </div>
+
+        <!-- Footer -->
+        <div class="card-footer text-center bg-white border-0 pb-3">
+          <small class="text-muted">2023 - IT Internal Globalindo Group</small>
+        </div>
+
+      </div>
 
     </div>
+
+  </div>
 </div>
-</div>
+
+</body>

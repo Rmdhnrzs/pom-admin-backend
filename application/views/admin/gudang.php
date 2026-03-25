@@ -1,74 +1,128 @@
 <style>
-  td {
-    font-size: 11px;
-    text-align: left;
+  .table td {
+    font-size: 12px;
+    vertical-align: middle;
   }
 
-  tr {
-    font-size: 14px;
+  .table thead th {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    border-bottom: 2px solid #dee2e6;
   }
 
-  .btn_tambah {
-    margin-bottom: 10px;
+  .table tbody tr:hover {
+    background-color: #f8fafc;
   }
 
-  .data-barang {
-    position: relative;
-    padding: 10px;
-    border: 1px solid #ccc;
-    transition: background-color 0.3s ease-in-out;
+  .table-responsive {
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+    border-radius: 8px;
   }
 
-  .btn_edit,
-  .btn_delete {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    background-color: rgba(0, 0, 0, 0.3);
+  .custom-card {
+    border-radius: 12px;
     border: none;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
+    overflow: hidden;
   }
 
-  .btn_edit {
-    right: 0;
+  .custom-header {
+    background: #f1f1f1;
+    padding: 14px 18px;
+    box-shadow: inset 0 -1px 0 #e0e0e0;
   }
 
-  .btn_delete {
-    right: 40px;
+  .icon-box {
+    width: 36px;
+    height: 36px;
+    background: #e7f1ff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .data-barang:hover {
-    background-color: #f5f5f5;
+  .custom-header h5 {
+    font-weight: 600;
+    color: #2c7be5;
   }
 
-  .data-barang:hover .btn_edit,
-  .data-barang:hover .btn_delete {
-    opacity: 1;
+  .custom-header small {
+    color: #888;
+    font-size: 12px;
+  }
+
+  .upload-box {
+    border: 2px dashed #dcdcdc;
+    padding: 12px;
+    border-radius: 10px;
+    background: #fafafa;
+  }
+
+  .upload-box:hover {
+    background: #f1f5f9;
+  }
+
+  .modal-content {
+    border-radius: 12px;
+    border: none;
+  }
+
+  .modal-header {
+    border-bottom: none;
+  }
+
+  .modal-footer {
+    border-top: none;
   }
 </style>
-<div class="card shadow">
-  <h5 class="card-header text-white bg-info">Gudang</h5>
-  <form class="my-2 input-group w-50" id="formImpor" method="post" enctype="multipart/form-data">
+<div class="card shadow-sm custom-card">
+
+  <div class="card-header custom-header d-flex justify-content-between align-items-center">
+
+    <div class="d-flex align-items-center">
+      <div class="icon-box mr-3 d-flex align-items-center justify-content-center">
+        <i class="fas fa-warehouse text-primary"></i>
+      </div>
+      <div>
+        <h5 class="mb-0">Manajemen Gudang</h5>
+        <small>Import & monitoring stok barang</small>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card-body">
+  <div class="upload-box mb-3">
+  <form class="input-group" id="formImpor" method="post" enctype="multipart/form-data">
+    
     <div class="custom-file">
       <input id="excel_file" class="custom-file-input" type="file" name="excel_file" accept=".xlsx,.xls,.csv">
-      <label for="excel_file" class="custom-file-label">File Excel</label>
+      <label for="excel_file" class="custom-file-label">Pilih file Excel...</label>
     </div>
+
     <div class="input-group-append">
-      <button type="submit" class="btn btn-info">Upload</button>
+      <button type="submit" class="btn btn-info">
+        <i class="fa fa-upload"></i> Upload
+      </button>
     </div>
+
   </form>
+</div>
+<div class="table-responsive">
   <table class="table table-striped" id="datatable" style="width: 100%;">
     <thead>
       <tr>
         <th>No</th>
         <th>Kode Artikel</th>
         <th>Nama Artikel</th>
-        <th>Stok</th>
-        <th>Waktu terakhir impor</th>
+        <th class="text-center">Stok</th>
+        <th>Terakhir Update</th>
       </tr>
     </thead>
     <tbody>
@@ -81,7 +135,11 @@
             <td><?php echo $no++ ?></td>
             <td><?php echo $row->kode_artikel ?></td>
             <td><?php echo $row->nama_artikel ?></td>
-            <td><?php echo $row->stok ?></td>
+            <td class="text-center">
+              <span class="badge badge-info">
+                <?= $row->stok ?>
+              </span>
+            </td>
             <td>
               <?php echo $row->updated_stok_at ? date('d-m-Y, H:i', strtotime($row->updated_stok_at)) : '-' ?>
             </td>

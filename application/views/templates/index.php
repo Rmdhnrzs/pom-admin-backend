@@ -1,3 +1,82 @@
+<style>
+/* bagian navbar */
+.navbar {
+  padding: 14px 25px;
+  min-height: 70px;
+}
+
+.navbar .nav-link {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.navbar .nav-link i {
+  font-size: 16px;
+}
+
+.navbar .nav-link span {
+  font-size: 14px;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+  color: #ffffff;
+}
+
+.navbar-dark .navbar-nav .nav-item.active .nav-link {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* bagian dropdown */
+.navbar .dropdown-menu {
+  border-radius: 10px;
+  border: none;
+  padding: 8px;
+  margin-top: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  animation: fadeDown 0.2s ease;
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: 0.2s;
+}
+
+.dropdown-item:hover {
+  background: #f1f5ff;
+  color: #0d6efd;
+}
+
+.dropdown-item:active {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.dropdown-item i {
+  width: 18px;
+}
+
+.dropdown-menu {
+  min-width: 180px;
+}
+</style>
 <body id="page-top">
 
   <!-- Page Wrapper -->
@@ -7,7 +86,7 @@
 
       <!-- Main Content -->
       <div id="content">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+        <nav class="navbar navbar-expand-lg navbar-dark shadow-sm mb-3" style="background: #007BFF;">
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
