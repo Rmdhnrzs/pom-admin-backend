@@ -1,6 +1,6 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
-require_once APPPATH . '../vendor/autoload.php';
+require_once FCPATH . 'vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class Barang extends CI_Controller
@@ -163,64 +163,172 @@ class Barang extends CI_Controller
 				return $this->jsonError('File kosong');
 			}
 
+			$ekstensiFile = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+			if (!in_array($ekstensiFile, ['xlsx', 'xls', 'csv'])) {
+				return $this->jsonError('Format file tidak didukung');
+			}
+
+			$maxSizeFile = 5 * 1024 * 1024;
+			if ($_FILES['file']['size'] > $maxSizeFile) {
+				return $this->jsonError('Ukuran file maksimal 5MB');
+			}
+
 			$id_perusahaan = $this->input->post('id_perusahaan');
 
 			$excel = $this->parseBarangFile($_FILES['file']['tmp_name']);
-			$db    = $this->getBarangDB($id_perusahaan);
+			$dbResult = $this->getBarangDB($id_perusahaan);
+			$db = $dbResult['items'];
+			$perusahaanMap = $dbResult['map'];
 
 			$result = [];
 
 			foreach ($excel as $kode => $row) {
 
-				// Validasi ulang
+				// handle file duplikat
+				if (!empty($row['duplicate'])) {
+					$result[] = [
+						'kode' => $kode,
+						'status'=> 'duplicate',
+						'errors'=> ['Duplicate dalam file'],
+						'changes'=> [],
+						'excel' => $row,
+						'db'=> null
+					];
+					continue;
+				}
+
+				// validasi file excel
+				$validSize = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL', 'S/M', 'L/XL', 'M/L', 'XL/XXL', 'ALL SIZE'];
+				$validSatuan = ['Pck', 'Pcs', 'Box', 'Psg', 'BOX'];
 				$errors = [];
 
-				if (!$row['kode']) $errors[] = 'Kode kosong';
-				if (!$row['nama']) $errors[] = 'Nama kosong';
-				if ((int)$row['kelipatan'] < 1) {
-					$errors[] = 'Kelipatan harus >= 1';
+				if (!$row['kode']) {
+					$errors[] = 'Kode kosong';
 				}
-				$is_valid = empty($errors);
 
+				if (!$row['nama']) {
+					$errors[] = 'Nama kosong';
+				}
+
+				if (!$row['size']) {
+					$errors[] = 'Size kosong';
+				} elseif (!in_array(strtoupper(trim($row['size'])), array_map('strtoupper', $validSize))) {
+					$errors[] = 'Size tidak valid (S/M/L/XL/XXL/XXXL/XXXXL/S/M/L/XL/M/L/XL/XXL/ALL SIZE)';
+				}
+
+				if (!$row['satuan']) {
+					$errors[] = 'Satuan kosong';
+				} elseif (!in_array($row['satuan'], $validSatuan)) {
+					$errors[] = 'Satuan tidak valid (Pck/Pcs/Box/Psg/BOX)';
+				}
+
+				if ((int)$row['kelipatan'] < 1 || (int)$row['kelipatan'] > 1000) {
+					$errors[] = 'Kelipatan harus 1 - 1000';
+				}
+
+				// validasi harga
+				$hargaFields = [
+					'retail', 'grosir', 'grosir_10',
+    				'het_jawa', 'indo_barat', 'special_price', 'barang_x'
+				];
+
+				foreach ($hargaFields as $field) {
+					if ($row[$field] !== null && !is_numeric($row[$field])) {
+						$errors[] = "$field harus angka";
+					}
+				}
+
+				// validasi kategori
+				$isBarangX = ($row['barang_x'] ?? 0) > 0;
+
+				if ($isBarangX) {
+					// Barang X: kolom harga lain harus kosong
+					if (
+						$row['retail'] || $row['grosir'] || $row['grosir_10'] ||
+						$row['het_jawa'] || $row['indo_barat'] || $row['special_price']
+					) {
+						$errors[] = 'Barang X hanya boleh isi kolom Barang X';
+					}
+				} else {
+					// Normal: tidak boleh isi kolom harga barang_x
+					if (!empty($row['barang_x'])) {
+						$errors[] = 'Barang normal tidak boleh isi Barang X';
+					}
+				}
+
+				//cek database
 				if (isset($db[$kode])) {
 					$dbRow = $db[$kode];
-
-					$changedFields = [];
+					$changeFields = [];
 
 					foreach ($row as $field => $val) {
+
 						if (!isset($dbRow[$field])) continue;
 
-						if ((string)$dbRow[$field] !== (string)$val) {
-							$changedFields[] = $field;
+						if (is_numeric($val)) {
+
+							if ((float)$dbRow[$field] !== (float)$val) {
+								$changeFields[] = $field;
+							}
+
+						} else {
+
+							$dbVal = $this->normalize($dbRow[$field]);
+							$exVal = $this->normalize($val);
+
+							if ($dbVal !== $exVal) {
+								$changeFields[] = $field;
+							}
 						}
+					}
+
+					if (!empty($errors)) {
+						$status = 'error';
+					} else {
+						$status = !empty($changeFields) ? 'update' : 'no_change';
 					}
 
 					$result[] = [
 						'kode' => $kode,
-						'status' => $is_valid
-							? (empty($changedFields) ? 'same' : 'update')
-							: 'invalid',
+						'status' => $status,
 						'errors' => $errors,
-						'changes' => $changedFields,
+						'changes' => $changeFields,
 						'excel' => $row,
 						'db' => $dbRow
 					];
+                } else {
+					$status = !empty($errors) ? 'error' : 'insert';
 
-				} else {
 					$result[] = [
 						'kode' => $kode,
-						'status' => $is_valid ? 'insert' : 'invalid',
+						'status' => $status,
 						'errors' => $errors,
 						'changes' => array_keys($row),
 						'excel' => $row,
 						'db' => null
-					];
+					];					
+
 				}
+				
 			}
 
-			return $this->jsonSuccess([
+			$summary = [
 				'total' => count($result),
-				'items' => $result
+				'insert' => count(array_filter($result, fn($r) => $r['status'] === 'insert')),
+				'update' => count(array_filter($result, fn($r) => $r['status'] === 'update')),
+				'no_change' => count(array_filter($result, fn($r) => $r['status'] === 'no_change')),
+				'error' => count(array_filter($result, fn($r) => $r['status'] === 'error')),
+				'duplicate' => count(array_filter($result, fn($r) => $r['status'] === 'duplicate')),
+			];
+			/* untuk test
+			$debug_updates = array_values(array_filter($result, fn($r) => $r['status'] === 'update'));
+			$debug_updates = array_slice($debug_updates, 0, 3);
+			*/
+			return $this->jsonSuccess([
+				'summary' => $summary,
+				'items' => $result,
+				// 'debug' => $debug_updates,
+				'duplicate' => count(array_filter($result, fn($r) => $r['status'] === 'duplicate'))
 			]);
 
 		} catch (\Throwable $e) {
@@ -236,11 +344,18 @@ class Barang extends CI_Controller
 				return $this->jsonError('File kosong');
 			}
 
+			$maxSizeFile = 5 * 1024 * 1024;
+			if ($_FILES['file']['size'] > $maxSizeFile) {
+				return $this->jsonError('Ukuran file maksimal 5MB');
+			}
+
 			$id_perusahaan = $this->input->post('id_perusahaan');
 			$id_user = $this->session->userdata('id');
 
 			$excel = $this->parseBarangFile($_FILES['file']['tmp_name']);
-			$db    = $this->getBarangDB($id_perusahaan);
+			$dbResult      = $this->getBarangDB($id_perusahaan);
+			$db            = $dbResult['items'];
+			$perusahaanMap = $dbResult['map'];
 
 			$this->db->trans_start();
 
@@ -250,8 +365,48 @@ class Barang extends CI_Controller
 
 			foreach ($excel as $kode => $row) {
 
+				if (!empty($row['duplicate'])) {
+					$skipped++;
+					continue;
+				}
 				// validasi
-				if (!$row['kode'] || !$row['nama'] || $row['kelipatan'] < 1 || $row['kelipatan'] > 1000) {
+				$isBarangX = ($row['barang_x'] ?? 0) > 0;
+
+				$invalid = false;
+
+				$validSize   = ['S','M','L','XL','XXL','XXXL','XXXXL','S/M','L/XL','M/L','XL/XXL','ALL SIZE'];
+				$validSatuan = ['Pck','Pcs','Box','Psg','BOX'];
+
+				if (!$row['kode'] || !$row['nama'] || !$row['satuan'] || !$row['size']) {
+					$invalid = true;
+				}
+
+				if (!in_array(strtoupper(trim($row['size'])), array_map('strtoupper', $validSize))) {
+					$invalid = true;
+				}
+
+				if (!in_array($row['satuan'], $validSatuan)) {
+					$invalid = true;
+				}
+
+				if ($row['kelipatan'] < 1 || $row['kelipatan'] > 1000) {
+					$invalid = true;
+				}
+
+				if ($isBarangX) {
+					if (
+						$row['retail'] || $row['grosir'] || $row['grosir_10'] ||
+						$row['het_jawa'] || $row['indo_barat'] || $row['special_price']
+					) {
+						$invalid = true;
+					}
+				} else {
+					if (!empty($row['barang_x'])) {
+						$invalid = true;
+					}
+				}
+
+				if ($invalid) {
 					$skipped++;
 					continue;
 				}
@@ -265,9 +420,19 @@ class Barang extends CI_Controller
 					}
 
 				} else {
+					$deleted = $this->db->get_where('tb_barang', [
+						'kode_artikel' => $kode,
+						'status' => 0
+					])->row();
 
-					$data['status'] = 1;
-					$insert[] = $data;
+					if ($deleted) {
+						$data['status'] = 1;
+						$this->db->update('tb_barang', $data, ['id' => $deleted->id]);
+						$update++;
+					} else {
+						$data['status'] = 1;
+						$insert[] = $data;
+					}
 				}
 			}
 
@@ -296,34 +461,69 @@ class Barang extends CI_Controller
 		$reader = IOFactory::createReaderForFile($file);
 		$reader->setReadDataOnly(true);
 
+		if ($reader instanceof \PhpOffice\PhpSpreadsheet\Reader\Csv) {
+			$sample = file_get_contents($file);
+			if (substr_count($sample, ';') > substr_count($sample, ',')) {
+				$reader->setDelimiter(';');
+			} else {
+				$reader->setDelimiter(',');
+			}
+		}
+
 		$spreadsheet = $reader->load($file);
 		$sheet = $spreadsheet->getActiveSheet()->toArray();
+
+		$header = $sheet[0] ?? [];
+
+		// Validasi header — tanpa kolom PT
+		$expectedHeader = ['No', 'Kode', 'Barang', 'Keterangan', 'Size', 'Satuan', 'Kelipatan', 'Retail', 'Grosir', 'Grosir_10', 'HET_Jawa', 'Indo_Barat', 'SP', 'Brg X'];
+
+		foreach($expectedHeader as $i => $expected) {
+			$actual = trim($header[$i] ?? '');
+			if (strtoupper($actual) !== strtoupper($expected)) {
+				throw new \Exception(
+					"Format file tidak sesuai template, silahkan unduh template kembali."
+				);
+			}
+		}
 
 		$result = [];
 
 		foreach ($sheet as $i => $row) {
-
 			if ($i === 0) continue;
-			if (!isset($row[2]) || trim($row[2]) === '') continue;
+			if (!isset($row[1]) || trim($row[1]) === '') continue; 
 
-			$kode = $this->normalize($row[2]);
-			if (isset($result[$kode])){
-				$result[$kode]['Duplicate'] = true;
-			}
+			$kode = $this->normalize($row[1]);
+			$kode = trim(preg_replace('/\s+BARANG\s*X\s*$/i', '', $kode));
+
+			if (isset($result[$kode])) continue;
+
 			$result[$kode] = [
-				'kode' => $kode,
-				'nama' => trim($row[3] ?? ''),
-				'keterangan' => trim($row[4] ?? ''),
-				'size' => trim($row[5] ?? ''),
-				'satuan' => trim($row[6] ?? ''),
-				'retail' => $this->parseHarga($row[7] ?? 0),
-				'grosir' => $this->parseHarga($row[8] ?? 0),
-				'grosir_10' => $this->parseHarga($row[9] ?? 0),
-				'het_jawa' => $this->parseHarga($row[10] ?? 0),
-				'indo_barat' => $this->parseHarga($row[11] ?? 0),
+				'kode'          => $kode,
+				'nama'          => trim($row[2] ?? ''),
+				'keterangan'    => trim($row[3] ?? ''),
+				'size'          => trim($row[4] ?? ''),
+				'satuan'        => trim($row[5] ?? ''),
+				'kelipatan'     => max(1, (int)($row[6] ?? 1)),
+
+				// raw data untuk validasi file
+				'retail_raw' => $row[7] ?? null,
+				'grosir_raw' => $row[8] ?? null,
+				'grosir_10_raw' => $row[9] ?? null,
+				'het_jawa_raw' => $row[10] ?? null,
+				'indo_barat_raw' => $row[11] ?? null,
+				'special_price_raw' => $row[12] ?? null,
+				'barang_x' => $row[13] ?? null,
+
+				// data untuk preview nya
+				'retail'        => $this->parseHarga($row[7] ?? 0),
+				'grosir'        => $this->parseHarga($row[8] ?? 0),
+				'grosir_10'     => $this->parseHarga($row[9] ?? 0),
+				'het_jawa'      => $this->parseHarga($row[10] ?? 0),
+				'indo_barat'    => $this->parseHarga($row[11] ?? 0),
 				'special_price' => $this->parseHarga($row[12] ?? 0),
-				'barang_x' => $this->parseHarga($row[13] ?? 0),
-				'kelipatan' => max(1, (int)($row[14] ?? 1)),
+				'barang_x'      => $this->parseHarga($row[13] ?? 0),
+				'duplicate'     => false
 			];
 		}
 
@@ -331,15 +531,48 @@ class Barang extends CI_Controller
 	}
 	private function parseHarga($val)
 	{
-		$val = str_replace(['Rp', '.', ','], ['', '', '.'], $val);
-		return (float)$val;
+		if ($val === null || $val === '') return null;
+
+		// Bersihkan Rp dan spasi
+		if (is_string($val)) {
+			$val = str_replace(['Rp', ' ', "\xA0"], '', $val);
+			$val = trim($val);
+		}
+
+		if ($val === '' || $val === null) return null;
+
+		// 1. Format campuran: 1.500,75 
+		if (preg_match('/^\d{1,3}(\.\d{3})+,\d+$/', $val)) {
+			$val = str_replace('.', '', $val);
+			$val = str_replace(',', '.', $val);
+			return (float)$val;
+		}
+
+		// 2. Pola ribuan: 10.000 atau 1.000.000
+		if (preg_match('/^\d{1,3}(\.\d{3})+$/', $val)) {
+			$val = str_replace('.', '', $val);
+			return (float)$val;
+		}
+
+		// 3. Desimal koma: 10,5 10.5
+		if (preg_match('/^\d+,\d+$/', $val)) {
+			$val = str_replace(',', '.', $val);
+			return (float)$val;
+		}
+
+		// 4. Sudah numeric
+		if (is_numeric($val)) {
+			return (float)$val;
+		}
+
+		return null;
 	}
 	private function normalize($val)
 	{
-		// Hilangkan karakter aneh (non printable)
+		// Hilangkan karakter non printable
 		$val = preg_replace('/[[:^print:]]/', '', $val);
 
-		// Replace semua whitespace (tab, newline, dll) jadi 1 spasi
+		// Replace semua whitespace jadi 1 spasi
 		$val = preg_replace('/\s+/', ' ', $val);
 
 		// Trim + uppercase
@@ -359,10 +592,7 @@ class Barang extends CI_Controller
 			throw new Exception('Perusahaan tidak ditemukan di database');
 		}
 
-		$rows = $this->db
-			->where('id_perusahaan', $id_perusahaan)
-			->get('tb_barang')
-			->result();
+		$rows = $this->db->get_where('tb_barang', ['status' => 1])->result();
 
 		$result = [];
 
@@ -383,71 +613,22 @@ class Barang extends CI_Controller
 				'indo_barat' => $r->indo_barat,
 				'special_price' => $r->special_price,
 				'barang_x' => $r->barang_x,
-				'kelipatan' => $r->kelipatan,
+				'kelipatan' => $r->kelipatan ?? 1,
 				'status' => $r->status,
 				'perusahaan' => $perusahaan->nama
 			];
 		}
 
-		return $result;
-	}
-	private function compareBarang($excel, $db)
-	{
-		$result = [];
-
-		foreach ($excel as $kode => $ex) {
-
-			if (isset($db[$kode])) {
-
-				$dbRow = $db[$kode];
-				$changes = [];
-
-				foreach ($ex as $field => $val) {
-
-					if (!array_key_exists($field, $dbRow)) continue;
-
-					if (is_numeric($val)) {
-
-						if ((float)$dbRow[$field] !== (float)$val) {
-							$changes[] = $field;
-						}
-
-					} else {
-
-						$dbVal = $this->normalize($dbRow[$field]);
-						$exVal = $this->normalize($val);
-
-						if ($dbVal !== $exVal) {
-							$changes[] = $field;
-						}
-					}
-				}
-
-				$result[] = [
-					'kode'    => $kode,
-					'is_exist'=> true,
-					'is_new'  => false,
-					'changed' => !empty($changes),
-					'changes' => $changes,
-					'excel'   => $ex,
-					'db'      => $dbRow
-				];
-
-			} else {
-
-				$result[] = [
-					'kode'    => $kode,
-					'is_exist'=> false,
-					'is_new'  => true,
-					'changed' => true,
-					'changes' => array_keys($ex),
-					'excel'   => $ex,
-					'db'      => null
-				];
-			}
+		$semuaPT = $this->db->get('tb_perusahaan')->result();
+		$perusahaanMap = [];
+		foreach ($semuaPT as $p) {
+			$perusahaanMap[strtoupper(trim($p->nama))] = $p->id;
 		}
 
-		return $result;
+		return [
+			'items' => $result,
+			'map'   => $perusahaanMap
+		];
 	}
 	private function jsonSuccess($data)
 	{
@@ -479,7 +660,9 @@ class Barang extends CI_Controller
 			return True;
 		}
 
+		$excludeCompare = ['update_at', 'id_user', 'id_perusahaan', 'status', 'id'];
 		foreach ($data as $field => $val) {
+			if (in_array($field, $excludeCompare)) continue;
 			if (!isset($dbRow[$field])) continue;
 
 			if ((string)$dbRow[$field] !== (string)$val) {

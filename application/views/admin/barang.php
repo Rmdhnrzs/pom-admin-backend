@@ -1,525 +1,290 @@
 <style>
-  td {
-    font-size: 11px;
-    text-align: left;
-  }
+.table td {
+  font-size: 12px;
+  vertical-align: middle;
+}
 
-  tr {
-    font-size: 14px;
-  }
+.table thead th {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+  border-bottom: 2px solid #dee2e6;
+}
 
-  .btn_tambah {
-    margin-bottom: 10px;
-  }
+.table tbody tr {
+  transition: all 0.2s ease-in-out;
+}
 
-  .btn_import {
-    margin-right: 10px;
-  }
+.table tbody tr:hover {
+  background-color: #f8fafc;
+}
 
-  .table-responsive {
-    max-height: 400px;
-    overflow-y: auto;
-  }
+.table-responsive {
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+  border-radius: 8px;
+}
 
-  .table tbody tr:hover {
-    background-color: #f8fafc;
-    transition: 0.2s;
-  }
+.custom-card {
+  border-radius: 12px;
+  border: none;
+  overflow: hidden;
+}
 
-  thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }
+.card-header {
+  padding: 14px 20px;
+  border-bottom: none;
+}
 
-  .badge {
-    font-size: 11px;
-    padding: 5px 8px;
-  }
+.card-header h5 {
+  font-weight: 600;
+}
 
-  .data-barang {
-    position: relative;
-    padding: 10px;
-    border: 1px solid #ccc;
-    transition: background-color 0.3s ease-in-out;
-  }
+.card-header small {
+  opacity: 0.8;
+}
 
-  .btn_edit,
-  .btn_delete {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    background-color: rgba(0, 0, 0, 0.3);
-    border: none;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-  }
+.btn_tambah {
+  margin-bottom: 10px;
+}
 
-  .btn_edit {
-    right: 0;
-  }
+.btn_import {
+  margin-right: 10px;
+}
 
-  .btn_delete {
-    right: 40px;
-  }
+.btn_edit,
+.btn_delete {
+  border-radius: 6px;
+  padding: 4px 8px;
+}
 
-  .data-barang:hover {
-    background-color: #f5f5f5;
-  }
+.badge {
+  font-size: 10px;
+  padding: 4px 7px;
+  border-radius: 6px;
+}
 
-  .data-barang:hover .btn_edit,
-  .data-barang:hover .btn_delete {
-    opacity: 1;
-  }
+.data-barang {
+  padding: 10px;
+  border-radius: 6px;
+  transition: background 0.2s ease-in-out;
+}
+
+.data-barang:hover {
+  background-color: #f5f5f5;
+}
+
+.form-control-sm {
+  font-size: 12px;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+#summary_import .card {
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+#summary_import .card:hover {
+  transform: translateY(-2px);
+}
+
+.table-responsive::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background-color: #999;
+}
+
+.custom-header {
+  background: #f1f1f1;
+  border-radius: 10px 10px 0 0;
+  padding: 14px 18px;
+}
+
+.icon-box {
+  width: 36px;
+  height: 36px;
+  background: #e7f1ff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-header h5 {
+  font-weight: 600;
+  color: #2c7be5;
+}
+
+.custom-header small {
+  color: #888;
+  font-size: 12px;
+}
+
+.btn-import {
+  background: #dcdcdc;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-weight: 500;
+}
+
+.btn-import:hover {
+  background: #cfcfcf;
+}
+
+.btn-success {
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-weight: 500;
+}
+.custom-header {
+  box-shadow: inset 0 -1px 0 #e0e0e0;
+}
+
+.action-group {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.btn-action {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-action i {
+  font-size: 13px;
+}
+
+.btn-warning.btn-action:hover {
+  background: #e0a800;
+}
+
+.btn-danger.btn-action:hover {
+  background: #c82333;
+}
 </style>
+<div class="card shadow-sm custom-card">
+  <!-- Header -->
+  <div class="card-header custom-header d-flex justify-content-between align-items-center">
+    <!-- Kiri -->
+    <div class="d-flex align-items-center">
+      <div class="icon-box mr-3 d-flex align-items-center justify-content-center">
+        <i class="fas fa-box text-primary"></i>
+      </div>
+      <div>
+        <h5 class="mb-0">Daftar Barang</h5>
+        <small>Manajemen data produk dan harga</small>
+      </div>
+    </div>
+    <!-- Kanan -->
+     <div>
+      <button type="button" class="btn btn-light btn-sm mr-2" data-toggle="modal" data-target="#modal_import">
+        <i class="fas fa-file-import"></i> Import Barang
+      </button>
+      <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal_tambah">
+        <i class="fas fa-plus"></i> Tambah Barang
+      </button>
+     </div>
+  </div>
 
-<div class="card shadow">
-  <h5 class="card-header text-white bg-info">Daftar Barang</h5>
   <div class="card-body">
-    <button type="button" class="btn btn-success btn-sm float-right btn_tambah" data-toggle="modal" data-target="#modal_tambah">
-      <i class="fas fa-plus"></i> Tambah Barang
-    </button>
-    <button type="button" class="btn btn-secondary btn-sm float-right btn_import" data-toggle="modal" data-target="#modal_import">
-      <i class="fas fa-file-import"></i> Import Barang
-    </button>
-    <table class="table table-striped" id="datatable" style="width: 100%;">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>PT</th>
-          <th>Kode</th>
-          <th>Barang</th>
-          <th>Keterangan</th>
-          <th>Size</th>
-          <th>Satuan</th>
-          <th>Kelipatan</th>
-          <th>Retail</th>
-          <th>Grosir</th>
-          <th>Grosir_10</th>
-          <th>HET_Jawa</th>
-          <th>Indo_Barat</th>
-          <th>SP</th>
-          <th>Brg X</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php $no = 1;
-        foreach ($barang as $k) { ?>
-          <tr class="data-barang">
+    <div class="d-flex justify-content-between mb-3">
+      <div id="dt-buttons"></div>
+      <div id="dt-search"></div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-stripped" id="datatable" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>PT</th>
+            <th>Kode</th>
+            <th>Barang</th>
+            <th>Keterangan</th>
+            <th>Size</th>
+            <th>Satuan</th>
+            <th>Kelipatan</th>
+            <th>Retail</th>
+            <th>Grosir</th>
+            <th>Grosir_10</th>
+            <th>HET_Jawa</th>
+            <th>Indo_Barat</th>
+            <th>SP</th>
+            <th>Brg X</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $no = 1; foreach ($barang as $k) { ?>
+          <tr>
             <td><?= $no++ ?></td>
             <td><?= strtoupper($k->nama_perusahaan) ?></td>
             <td>
-              <?= $k->kode_artikel ?>
-              <br>
-              <?php
-              if ($k->kategori == 1) {
-                echo "<span class='badge badge-danger badge-sm'>Barang X</span>";
-              }
-              ?>
+              <?= $k->kode_artikel ?><br>
+              <?php if ($k->kategori == 1) { ?>
+                <span class="badge badge-danger badge-sm">Barang X</span>
+              <?php } ?>
             </td>
             <td><?= $k->nama_artikel ?></td>
-            <td data-bs-toggle="tooltip" title="<?= $k->keterangan ?>"><?= (strlen($k->keterangan) > 40 ? substr($k->keterangan, 0, 40) . '...' : $k->keterangan) ?></td>
+            <td><?= $k->keterangan ?></td>
             <td><?= $k->size ?></td>
             <td><?= $k->satuan ?></td>
-            <td title="Kelipatan ><?= $k->kelipatan ?>">
-              <?= $k->kelipatan ?>
-            </td>
+            <td><?= $k->kelipatan ?></td>
             <td>Rp <?= number_format($k->retail) ?></td>
             <td>Rp <?= number_format($k->grosir) ?></td>
             <td>Rp <?= number_format($k->grosir_10) ?></td>
             <td>Rp <?= number_format($k->het_jawa) ?></td>
             <td>Rp <?= number_format($k->indo_barat) ?></td>
             <td>Rp <?= number_format($k->special_price) ?></td>
-            <td>Rp <?= number_format($k->barang_x) ?>
-              <button type="button" class="btn btn-warning btn-sm btn_edit" data-toggle="modal" data-target="#exampleModalCenter" onclick="getdetail('<?php echo $k->id; ?>')">
-                <i class="fas fa-edit"></i>
-              </button>
-              <a href="#" class="btn btn-danger btn-sm btn_delete" data-id="<?= $k->id ?>">
-                <i class="fas fa-trash"></i>
-              </a>
-            </td>
+            <td>Rp <?= number_format($k->barang_x) ?></td>
+            <td>
+              <div class="action-group">
+                <button type="button" class="btn btn-warning btn-sm btn_edit"
+                  data-toggle="modal"
+                  data-target="#exampleModalCenter"
+                  onclick="getdetail('<?= $k->id ?>')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-danger btn-sm btn-action btn_delete"
+                  data-id="<?= $k->id ?>">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+          </td>
           </tr>
-        <?php } ?>
-      </tbody>
-    </table>
+          <?php } ?>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 <!-- tambah barang -->
 <!-- Button trigger modal -->
-
-
-<!-- Modal -->
-<div class="modal fade" id="modal_tambah" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static">
-  <form action="<?= base_url('Barang/simpan') ?>" method="POST">
-    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
-      <div class="modal-content">
-        <div class="modal-header bg-success text-white">
-          <h5 class="modal-title" id="exampleModalLongTitle">Tambah Barang Baru</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Perusahaan :</label>
-            <select name="perusahaan" class="form-control" required>
-              <option value="">-- Pilih Perusahaan --</option>
-              <?php foreach ($perusahaan as $p) { ?>
-                <option value="<?= $p->id ?>"><?= $p->nama ?></option>
-              <?php } ?>
-            </select>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="">Kode Barang :</label>
-                <input type="text" name="kode" id="kode_add" class="form-control form-control-sm" required>
-              </div>
-              <div class="form-group">
-                <label for="">Nama Barang :</label>
-                <input type="text" name="barang" class="form-control form-control-sm" required>
-              </div>
-              <div class="form-group">
-                <label for="">Keterangan :</label>
-                <textarea name="keterangan" class="form-control form-control-sm" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label for="">Size :</label>
-                <select name="size" class="form-control form-control-sm" required>
-                  <option value="">- Pilih Size -</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                  <option value="XXL">XXL</option>
-                  <option value="XXXL">XXXL</option>
-                  <option value="XXXXL">XXXXL</option>
-                  <option value="S/M">S/M</option>
-                  <option value="L/XL">L/XL</option>
-                  <option value="M/L">M/L</option>
-                  <option value="XL/XXL">XL/XXL</option>
-                  <option value="ALL SIZE">ALL SIZE</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="">Satuan :</label>
-                <select name="satuan" class="form-control form-control-sm" required>
-                  <option value="">- Pilih Satuan -</option>
-                  <option value="Pck">Pck</option>
-                  <option value="Pcs">Pcs</option>
-                  <option value="Box">Box</option>
-                  <option value="Psg">Psg</option>
-                  <option value="BOX">BOX</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Kelipatan :</label>
-                <input type="number" name="kelipatan" class="form-control form-control-sm" value="1" min="1">
-              </div>
-              
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="">Kategori :</label>
-                <select name="kategori" id="kategori_add" class="form-control form-control-sm" required>
-                  <option value="">- Pilih kategori -</option>
-                  <option value="0">Barang Normal</option>
-                  <option value="1">Barang X</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="">Retail :</label>
-                <input type="text" name="retail" id="retail_add" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Grosir :</label>
-                <input type="text" name="grosir" id="grosir_add" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Grosir_10 :</label>
-                <input type="text" name="grosir_10" id="grosir_10_add" class="form-control form-control-sm" autocomplete="off">
-              </div>
-
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="">Het Jawa :</label>
-                <input type="text" name="het_jawa" id="het_jawa_add" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Indo Barat :</label>
-                <input type="text" name="indo_barat" id="indo_barat_add" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Special Price :</label>
-                <input type="text" name="special_price" id="sp_add" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Barang X :</label>
-                <input type="text" name="barang_x" id="barang_x_add" class="form-control form-control-sm" autocomplete="off">
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-success btn-sm">Simpan</button>
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
-<!-- end tambah -->
-
-<!-- modal import -->
-<div class="modal fade" id="modal_import" tabindex="-1" data-backdrop="static">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content shadow">
-
-      <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title">
-          <i class="fas fa-file-import mr-2"></i> Import Data Barang
-        </h5>
-        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-      </div>
-
-      <form id="form_import" action="<?= base_url('Barang/import') ?>" method="POST" enctype="multipart/form-data">
-
-        <div class="modal-body">
-
-          <!-- INPUT -->
-          <div class="row">
-            <div class="col-md-6">
-              <label>Perusahaan</label>
-              <select name="id_perusahaan" id="import_perusahaan" class="form-control" required>
-                <option value="">-- Pilih --</option>
-                <?php foreach ($perusahaan as $p) { ?>
-                  <option value="<?= $p->id ?>"><?= $p->nama ?></option>
-                <?php } ?>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label>File Excel</label>
-              <input type="file" name="file" id="file_input" class="form-control" accept=".xlsx,.xls,.csv" required>
-            </div>
-          </div>
-
-          <!-- LOADING -->
-          <div id="loading_import" class="text-center mt-4 d-none">
-            <div class="spinner-border text-primary"></div>
-            <p class="mt-2 text-muted">Menganalisa file Excel...</p>
-          </div>
-
-          <!-- SUMMARY -->
-          <div id="summary_import" class="alert alert-light border mt-3 d-none"></div>
-
-          <!-- WARNING -->
-          <div id="warning_import" class="alert alert-warning mt-2 d-none">
-            Sistem hanya akan menambahkan data baru dan mengisi data kosong.
-          </div>
-
-          <!-- PREVIEW -->
-          <div id="preview_excel" class="mt-3 d-none">
-            <div class="row">
-
-              <!-- EXCEL -->
-              <div class="col-md-6">
-                <h6 class="text-primary">Excel</h6>
-                <div class="table-responsive">
-                  <table class="table table-sm table-bordered">
-                    <thead class="thead-dark">
-                      <tr>
-                        <th>Status</th>
-                        <th>Kode</th>
-                        <th>PT</th>
-                        <th>Barang</th>
-                        <th>Keterangan</th>
-                        <th>Size</th>
-                        <th>Satuan</th>
-                        <th>Kelipatan</th>
-                        <th>Retail</th>
-                        <th>Grosir</th>
-                        <th>G10</th>
-                        <th>HET</th>
-                        <th>Indo</th>
-                        <th>SP</th>
-                        <th>Brg X</th>
-                      </tr>
-                    </thead>
-                    <tbody id="preview_excel_body"></tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- DB -->
-              <div class="col-md-6">
-                <h6 class="text-warning">Database</h6>
-                <div class="table-responsive">
-                  <table class="table table-sm table-bordered">
-                    <thead class="thead-dark">
-                      <tr>
-                        <th>Status</th>
-                        <th>Kode</th>
-                        <th>PT</th>
-                        <th>Barang</th>
-                        <th>Keterangan</th>
-                        <th>Size</th>
-                        <th>Satuan</th>
-                        <th>Kelipatan</th>
-                        <th>Retail</th>
-                        <th>Grosir</th>
-                        <th>G10</th>
-                        <th>HET</th>
-                        <th>Indo</th>
-                        <th>SP</th>
-                        <th>Brg X</th>
-                      </tr>
-                    </thead>
-                    <tbody id="preview_db_body"></tbody>
-                  </table>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal">Close</button>
-          <button type="submit" id="btn_import" class="btn btn-success btn-sm">Import</button>
-        </div>
-
-      </form>
-
-    </div>
-  </div>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" data-backdrop="static">
-  <form action="<?= base_url('Barang/update') ?>" method="POST">
-    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
-      <div class="modal-content">
-        <div class="modal-header bg-warning">
-          <h5 class="modal-title" id="exampleModalLongTitle">Update Data</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Perusahaan :</label>
-            <input id="perusahaan" type="text" class="form-control" disabled>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="">Kode Barang :</label>
-                <input type="text" name="kode" id="kode" class="form-control form-control-sm" readonly>
-                <input type="hidden" name="id_barang" id="id_barang" class="form-control form-control-sm" readonly>
-              </div>
-              <div class="form-group">
-                <label for="">Nama Barang :</label>
-                <input type="text" name="barang" id="barang" class="form-control form-control-sm" required>
-
-              </div>
-              <div class="form-group">
-                <label for="">Keterangan :</label>
-                <textarea name="keterangan" id="keterangan" class="form-control form-control-sm" rows="3"></textarea>
-
-              </div>
-              <div class="form-group">
-                <label for="">Size :</label>
-                <select name="size" id="size_edit" class="form-control form-control-sm" required>
-                  <option value="">- Pilih Size -</option>
-                 <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                  <option value="XXL">XXL</option>
-                  <option value="XXXL">XXXL</option>
-                  <option value="XXXXL">XXXXL</option>
-                  <option value="S/M">S/M</option>
-                  <option value="L/XL">L/XL</option>
-                  <option value="M/L">M/L</option>
-                  <option value="XL/XXL">XL/XXL</option>
-                  <option value="ALL SIZE">ALL SIZE</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="">Satuan :</label>
-                <select name="satuan" id="satuan_input" class="form-control form-control-sm">
-                  <option value="Pck">Pck</option>
-                  <option value="Pcs">Pcs</option>
-                  <option value="Box">Box</option>
-                  <option value="Psg">Psg</option>
-                  <option value="BOX">BOX</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Kelipatan :</label>
-              <input type="number" name="kelipatan" id="kelipatan" class="form-control form-control-sm">
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="">Kategori :</label>
-                <select name="kategori" id="kategori" class="form-control form-control-sm" required>
-                  <option value="">- Pilih kategori -</option>
-                  <option value="0">Barang Normal</option>
-                  <option value="1">Barang X</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="">Retail :</label>
-                <input type="text" name="retail" id="retail" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Grosir :</label>
-                <input type="text" name="grosir" id="grosir" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Grosir_10 :</label>
-                <input type="text" name="grosir_10" id="grosir_10" class="form-control form-control-sm" autocomplete="off">
-              </div>
-            </div>
-            <div class="col-md-4">
-
-              <div class="form-group">
-                <label for="">Het Jawa :</label>
-                <input type="text" name="het_jawa" id="het_jawa" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Indo Barat :</label>
-                <input type="text" name="indo_barat" id="indo_barat" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Special Price :</label>
-                <input type="text" name="special_price" id="sp" class="form-control form-control-sm" autocomplete="off">
-              </div>
-              <div class="form-group">
-                <label for="">Barang X :</label>
-                <input type="text" name="barang_x" id="barang_x" class="form-control form-control-sm" autocomplete="off">
-              </div>
-
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger  btn-sm" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary  btn-sm">Simpan</button>
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
+ <?php $this->load->view('modal_barang'); ?>
 <script>
   function formatRupiah(angka) {
     var number_string = angka.toString().replace(/[^,\d]/g, ""),
@@ -669,8 +434,35 @@
 </script>
 
 <script>
-$(document).ready(function(){
+  $(document).ready(function(){
 
+  $('#import_perusahaan').on('change', function(){
+    if($('#file_input')[0].files.length > 0){
+      $('#file_input').trigger('change');
+    }
+  });
+
+  // Reset form import saat modal ditutup
+  $('#modal_import').on('hidden.bs.modal', function() {
+    $('#file_input').val('');
+
+    $('#import_perusahaan').val('');
+
+    // Sembunyikan semua section preview
+    $('#preview_excel').addClass('d-none');
+    $('#summary_import').addClass('d-none');
+    $('#warning_import').addClass('d-none');
+    $('#loading_import').addClass('d-none');
+    
+    // Kosongkan isi tabel preview
+    $('#preview_body').html('');
+    
+    // Reset summary angka
+    $('#sum_total, #sum_nochange, #sum_update, #sum_insert, #sum_error').text('0');
+    
+    // Enable tombol import kembali
+    $('#btn_import').prop('disabled', false).text('Import');
+  })
   $('#file_input').on('change', function(){
 
     let file = this.files[0];
@@ -678,8 +470,27 @@ $(document).ready(function(){
 
     if(!file) return;
 
+    const maxSize = 5 * 1024 *1024;
+    if(file.size > maxSize){
+      Swal.fire({
+        icon: 'warning',
+        title: 'File terlalu besar',
+        text: 'Ukuran file maksimal 5 MB',
+        confirmButtonColor: #d33,
+        confirmButtonText: 'OK'
+      });
+      $('#file_input').val('');
+      return;
+    }
+
     if(!id_perusahaan){
-      alert('Pilih perusahaan dulu!');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Perusahan Belum dipilih',
+        text: 'Silahkan pilih perusahaan terlebih dahulu sebelum upload file',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'OK'
+      });
       $('#file_input').val('');
       return;
     }
@@ -706,176 +517,126 @@ $(document).ready(function(){
         $('#loading_import').addClass('d-none');
 
         if(!res.success){
-          alert(res.error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal',
+            text: res.error,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'OK'
+          })
           return;
         }
 
-        let excel_html = '';
-        let db_html = '';
+        let html = '';
+        let summary = res.data.summary;
+        console.log('Summary:', summary);
+        console.log('DEBUG:', JSON.stringify(res.data.debug, null, 2));
+        res.data.items.forEach(function(item){
 
-        let total=0, baru=0, update=0, sama=0;
+          // Tampilkan insert, update, dan error
+          if(item.status !== 'insert' && item.status !== 'update' && item.status !== 'error') return;
 
-        let items = res.data.items || [];
-
-        items.forEach(function(item){
-
-          total++;
-
-          let badge='', rowClass='';
-
-          if(item.status === 'insert') {
-            baru++;
-            badge='<span class="badge badge-primary">Baru</span>';
-            rowClass='table-primary';
-          } else if(item.status === 'update'){
-            update++;
-            badge='<span class="badge badge-warning">Update</span>';
-            rowClass='table-warning';
-          } else if(item.status === 'same'){
-            sama++;
-            badge='<span class="badge badge-danger">Tidak Berubah</span>';
-            rowClass='table-light';
-          } else if(item.status === 'invalid') {
-            badge='<span class="badge badge-secondary">Invalid</span>';
-            rowClass='table-danger';
-          }
-
-          // EXCEL
-          excel_html += `
-          <tr class="${rowClass}">
-            <td>${badge}</td>
-            <td>
-              ${item.kode}
-              ${item.excel.barang_x > 0 ? '<br><span class="badge badge-danger badge-sm">Barang X</span>' : ''}
-            </td>
-            <td>${$('#import_perusahaan option:selected').text()}</td>
-            <td>${item.excel.nama || '-'}</td>
-            <td>${item.excel.keterangan || '-'}</td>
-            <td>${item.excel.size || '-'}</td>
-            <td>${item.excel.satuan || '-'}</td>
-            <td>${item.excel.kelipatan || 1}</td>
-            <td>${formatRupiah(item.excel.retail)}</td>
-            <td>${formatRupiah(item.excel.grosir)}</td>
-            <td>${formatRupiah(item.excel.grosir_10)}</td>
-            <td>${formatRupiah(item.excel.het_jawa)}</td>
-            <td>${formatRupiah(item.excel.indo_barat)}</td>
-            <td>${formatRupiah(item.excel.special_price)}</td>
-            <td>${formatRupiah(item.excel.barang_x)}</td>
-          </tr>
-          `;
-
-          // DB
-          db_html += `<tr class="${rowClass}">
-            <td>${item.status === 'insert' ? 'Belum Ada' : 'Ada'}</td>
-          `;
+          let badge = '', rowClass = '';
 
           if(item.status === 'insert'){
-
-            db_html += `
-              <td>${item.kode}</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-            `;
-
-          } else {
-
-            db_html += `
-              <td>
-                ${item.db.kode}
-                ${item.db.barang_x > 0 ? '<br><span class="badge badge-danger badge-sm">Barang X</span>' : ''}
-              </td>
-              <td>${item.db.perusahaan || '-'}</td>
-              <td>${item.db.nama}</td>
-              <td>${item.db.keterangan}</td>
-              <td>${item.db.size}</td>
-              <td>${item.db.satuan}</td>
-              <td>${item.db.kelipatan || 1}</td>
-              <td>${formatRupiah(item.db.retail)}</td>
-              <td>${formatRupiah(item.db.grosir)}</td>
-              <td>${formatRupiah(item.db.grosir_10)}</td>
-              <td>${formatRupiah(item.db.het_jawa)}</td>
-              <td>${formatRupiah(item.db.indo_barat)}</td>
-              <td>${formatRupiah(item.db.special_price)}</td>
-              <td>${formatRupiah(item.db.barang_x)}</td>
-            `;
+            badge    = '<span class="badge badge-danger">Baru</span>';
+            rowClass = 'table-danger';
+          } else if(item.status === 'update'){
+            badge    = '<span class="badge badge-warning">Update</span>';
+            rowClass = 'table-warning';
+          } else if(item.status === 'error') {
+              let errMsg = item.errors.join(', ');
+              badge    = '<span class="badge badge-dark" title="'+errMsg+'" style="cursor:help">⚠ Error</span>'
+                        + '<br><small class="text-danger">'+errMsg+'</small>';
+              rowClass = 'table-secondary';
           }
 
-          db_html += `</tr>`;
-
+          html += `
+            <tr class="${rowClass}">
+              <td>${badge}</td>
+              <td>${item.kode}</td>
+              <td>${$('#import_perusahaan option:selected').text()}</td>
+              <td>${item.excel.nama || '-'}</td>
+              <td>${item.excel.keterangan || '-'}</td>
+              <td>${item.excel.size || '-'}</td>
+              <td>${item.excel.satuan || '-'}</td>
+              <td>${item.excel.kelipatan || 1}</td>
+              <td>${formatRupiah(item.excel.retail || 0)}</td>
+              <td>${formatRupiah(item.excel.grosir || 0)}</td>
+              <td>${formatRupiah(item.excel.grosir_10 || 0)}</td>
+              <td>${formatRupiah(item.excel.het_jawa || 0)}</td>
+              <td>${formatRupiah(item.excel.indo_barat || 0)}</td>
+              <td>${formatRupiah(item.excel.special_price || 0)}</td>
+              <td>${formatRupiah(item.excel.barang_x || 0)}</td>
+            </tr>
+          `;
         });
 
-        $('#preview_excel_body').html(excel_html);
-        $('#preview_db_body').html(db_html);
+        if(html === ''){
+          html = '<tr><td colspan="15" class="text-center text-muted">Tidak ada data baru atau perubahan</td></tr>';
+        }
+        
+        let errCount = (summary.error || 0) + (summary.duplicate || 0);
 
-        $('#summary_import').removeClass('d-none').html(`
-          <b>${total}</b> data —
-          <span class="text-primary">${baru} baru</span>,
-          <span class="text-warning">${update} update</span>,
-          <span class="text-muted">${sama} sama</span>
-        `);
-
-        $('#warning_import').removeClass('d-none');
+        $('#preview_body').html(html);
         $('#preview_excel').removeClass('d-none');
 
-        $('#btn_import').prop('disabled', (baru === 0 && update === 0));
+        $('#sum_total').text(summary.total);
+        $('#sum_nochange').text(summary.no_change);
+        $('#sum_update').text(summary.update);
+        $('#sum_insert').text(summary.insert);
+        $('#sum_error').text(errCount);
+        $('#summary_import').removeClass('d-none');
+
+        // Disable tombol import kalau ada error
+        if(errCount > 0){
+            $('#btn_import').prop('disabled', true).attr('title', 'Tidak bisa import, ada ' + errCount + ' data bermasalah');
+        } else {
+            $('#btn_import').prop('disabled', false).attr('title', '');
+        }
+        $('#warning_import').removeClass('d-none');
+      },
+
+      error: function(){
+        $('#loading_import').addClass('d-none');
+        alert('Gagal menghubungi server');
       }
     });
 
   });
-    $('#form_import').on('submit', function(e){
-    e.preventDefault();
 
-    let formData = new FormData(this);
-
+  function doImport(form){
+    let formData = new FormData(form);
     $('#btn_import').prop('disabled', true).text('Importing...');
-
     $.ajax({
-      url: $(this).attr('action'),
-      type: 'POST',
-      data: formData,
-      processData: false,
-      contentType: false,
-      dataType: 'json',
-
-      success: function(res){
-
-        $('#btn_import').prop('disabled', false).text('Import');
-
-        if(!res.success){
-          Swal.fire('Error', res.error, 'error');
-          return;
+        url: $(form).attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(res){
+            $('#btn_import').prop('disabled', false).text('Import');
+            if(!res.success){
+                Swal.fire('Error', res.error, 'error');
+                return;
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Import Berhasil',
+                html: '<b>'+res.data.inserted+'</b> data ditambahkan<br><b>'+res.data.updated+'</b> data diupdate'
+            }).then(() => { location.reload(); });
+        },
+        error: function(){
+            $('#btn_import').prop('disabled', false).text('Import');
+            Swal.fire('Error', 'Server error', 'error');
         }
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Import Berhasil',
-          html: `
-            <b>${res.data.inserted}</b> data ditambahkan<br>
-            <b>${res.data.updated}</b> data diupdate
-          `
-        }).then(() => {
-          location.reload();
-        });
-
-      },
-
-      error: function(){
-        $('#btn_import').prop('disabled', false).text('Import');
-        Swal.fire('Error', 'Server error', 'error');
-      }
     });
+}
 
+  $('#form_import').on('submit', function(e){
+      e.preventDefault();
+      doImport(this);
   });
 
 });
