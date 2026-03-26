@@ -5,6 +5,7 @@ class Sales_order_api extends Api_Controller {
     public function __construct(){
         parent::__construct();
         $this->load->library('cart');
+        $this->checkAuth();
     }
 
     public function list_produk()
@@ -21,7 +22,7 @@ class Sales_order_api extends Api_Controller {
         $id_customer = $this->input->get('id_customer');
         $tipe_customer = $this->input->get('tipe_customer');
         $tipe_po = $this->input->get('tipe_po');
-        $perusahaan_id = $this->input->get('perusahaan_id');
+        $perusahaan_id = $this->current_user->perusahaan_id;
 
         if (!isset($id_customer)) {
             return $this->response([
@@ -74,7 +75,7 @@ class Sales_order_api extends Api_Controller {
             ], 405);
         }
 
-        $id_perusahaan = $this->input->get('perusahaan_id');
+        $id_perusahaan = $this->current_user->perusahaan_id;
         $customer = $this->db->query("SELECT * from tb_customer where id_perusahaan = '$id_perusahaan' order by nama_customer")->result();
 
         return $this->response([
@@ -92,15 +93,15 @@ class Sales_order_api extends Api_Controller {
             ], 405);
         }
 
-        $this->checkAuth();
+        // $this->checkAuth();
 
         $tanggal = $this->input->get('tanggal');
         if (!$tanggal) {
             $tanggal = date("Y-m-d");
         }
 
-        $pt = $this->input->get('perusahaan_id');
-        $id_user = $this->input->get('id_user');
+        $pt = $this->current_user->perusahaan_id;
+        $id_user = $this->current_user->id;
 
         $data_history = $this->db->query("SELECT tb_order.id, tb_order.status, tb_customer.nama_customer, tb_order.tanggal_dibuat, tb_order.jenis as tipe_po from tb_order join tb_customer on tb_customer.id = tb_order.id_customer where tb_order.id_user = '$id_user' and date(tanggal_dibuat) = '$tanggal' and tb_order.id_perusahaan = '$pt' order by tb_order.tanggal_dibuat desc")->result();
         
@@ -119,7 +120,7 @@ class Sales_order_api extends Api_Controller {
             ], 405);
         }
 
-        $this->checkAuth();
+        // $this->checkAuth();
 
         $id = $this->input->get('id');
 

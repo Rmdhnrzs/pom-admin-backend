@@ -6,6 +6,7 @@ class Keranjang_Api extends Api_Controller {
     public function __construct() {
         parent::__construct();
         $this->checkAuth();
+        // $this->checkCsrf();
     }
 
     // -----------------------------------------------------------------------
@@ -64,8 +65,8 @@ class Keranjang_Api extends Api_Controller {
         $catatan       = $this->input->post('catatan');
         $referensi     = $this->input->post('referensi');
         $items         = $this->input->post('items');   // array of cart rows
-        $id_user       = $this->input->post('id_user');
-        $id_perusahaan = $this->input->post('perusahaan_id');
+        $id_user       = $this->current_user->id;
+        $id_perusahaan = $this->current_user->perusahaan_id;
         $diskon_faktur = '0%';
 
         // -- Validate required fields --

@@ -62,20 +62,39 @@ class Auth_Mobile_Api extends Api_Controller
                 'login' => true,
                 'expiry' => $expiry,
             ];
-            $this->session->set_userdata($data);
+            $payload = [
+                'id' => $user_data->id,
+                'name' => $user_data->nama,
+                'username' => $user_data->username,
+                'role_id' => $user_data->id_role,
+                'perusahaan_id' => $perusahaan->id,
+                'nama_perusahaan' => $perusahaan->nama, 
+            ];
 
+            $token = $this->jwt_lib->generate($payload);
+            // $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+            /*
+            setcookie(
+                'token',
+                $token,
+                [
+                    'expires' => time() + 86400,
+                    'path' => '/',
+                    'secure' => false,
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ]
+            );
+            */
+            // $csrf_token = generate_csrf_token();
             return $this->response([
                 'status' => true,
                 'message' => 'Login successful',
-                'data' => [
-                    'id' => $user_data->id,
-                    'name' => $user_data->nama,
-                    'role_id' => $user_data->id_role,
-                    'perusahaan_id' => $perusahaan->id,
-                    'nama_perusahaan' => $perusahaan->nama,
-                    'expiry_at' => $expiry,
-                ]
+                'token' => $token 
+                // 'csrf_token' => $csrf_token
             ], 200);
+
+
         } else {
             return $this->response([
                 'status' => false,
@@ -85,7 +104,18 @@ class Auth_Mobile_Api extends Api_Controller
     }
     public function logout()
     {
-        $this->session->sess_destroy();
+        // hapus cookie JWT
+        /*
+        setcookie(
+            'token',
+            '',
+            [
+                'expires' => time() - 3600,
+                'path' => '/',
+            ]
+        );
+        */
+
         return $this->response([
             'status' => true,
             'message' => 'Logout successful'
@@ -101,7 +131,8 @@ class Auth_Mobile_Api extends Api_Controller
             ], 405);
         }
 
-        $id_user = $this->session->userdata('id');
+        $this->checkAuth();
+        $id_user = $this->current_user->id;
         $password = $this->input->post('pass');
 
         if (!$password) {
@@ -134,6 +165,23 @@ class Auth_Mobile_Api extends Api_Controller
         return $this->response([
             'status' => true,
             'data' => $perusahaan
+        ], 200);
+    }
+
+    public function profile()
+    {
+        $this->checkAuth();
+
+        return $this->response([
+            'status' => true,
+            'data' => [
+                'id'              => $this->current_user->id,
+                'name'            => $this->current_user->name,
+                'username'        => $this->current_user->username,
+                'role_id'         => $this->current_user->role_id,
+                'perusahaan_id'   => $this->current_user->perusahaan_id,
+                'nama_perusahaan' => $this->current_user->nama_perusahaan,
+            ]
         ], 200);
     }
 }

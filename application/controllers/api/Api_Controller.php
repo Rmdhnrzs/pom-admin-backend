@@ -8,6 +8,7 @@ class Api_Controller extends CI_Controller {
 
     public function index()
     {
+        /*
         $user = $this->session->userdata();
         if (!$user || empty($user['login'])) {
             return $this->response([
@@ -27,13 +28,14 @@ class Api_Controller extends CI_Controller {
                 'nama_perusahaan'=> $user['nama_perusahaan'],
             ]
         ], 200);
+        */
     }
 
     private function handleCors()
     {
         $allowedOrigins = [
             "http://localhost:5173",
-            // "http://192.168.17.132:5173",
+            "http://192.168.17.132:5173",
             "http://192.168.17.106:5173",
         ];
 
@@ -50,18 +52,87 @@ class Api_Controller extends CI_Controller {
             exit();
         }
     }
+
+    private function unauthorized($message)
+    {
+        $this->response([
+            'status' => false,
+            'message' => $message
+        ], 401);
+        exit;
+    }
+
     protected function checkAuth()
     {
-        $user = $this->session->userdata();
-        if (empty($user['login'])) {
-            $this->response([
-                'status' => false,
-                'message' => 'Unauthorized'
-            ], 401);
-            return true;
+        //JWT React
+        $token = $this->get_token();
+        if ($token) {
+            $result = $this->jwt_lib->verify($token);
+
+            if (!$result['status']) {
+                return $this->unauthorized('Token invalid / expired');
+            }
+
+            $this->current_user = (object) $result['data'];
+            return;
         }
-        return false;
+
+        /*
+        $session = $this->session->userdata();
+
+        if (!empty($session['login'])) {
+            $this->current_user = (object) $session;
+            return;
+        }
+        */
+
+        return $this->unauthorized('Unauthorized');
     }
+
+    private function get_token()
+    {
+
+        
+        $headers = apache_request_headers();
+        $auth = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        if (preg_match('/Bearer\s(\S+)/', $auth, $matches)) {
+            return $matches[1];
+        }
+       
+        if (isset($_COOKIE['token'])) {
+            return $_COOKIE['token'];
+        }
+        return null;
+    }
+
+    protected function getUser()
+    {
+        // kalau JWT
+        if (isset($this->current_user)) {
+            return (object) $this->current_user;
+        }
+
+        /*
+        $session = $this->session->userData();
+        if (!empty($session['login'])) {
+            return (object) $session;
+        }
+        */
+
+        return null;
+    }
+
+    /*
+    protected function checkCsrf()
+    {
+        if ($this->input->method() !== 'get') {
+            if (!verify_csrf_token()) {
+                return $this->unauthorized('Invalid CSRF Token');
+            }
+        }
+    }
+    */
+
     protected function response($data, $status_code = 200)
     {
         $this->output->set_content_type('application/json');
