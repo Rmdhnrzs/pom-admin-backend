@@ -34,9 +34,7 @@ class Api_Controller extends CI_Controller {
     private function handleCors()
     {
         $allowedOrigins = [
-            "http://localhost:5173",
-            "http://192.168.17.132:5173",
-            "http://192.168.17.106:5173",
+            $this->config->item('frontend_host'),
         ];
 
         if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {

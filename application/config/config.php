@@ -534,3 +534,6 @@ $config['rewrite_short_tags'] = FALSE;
 */
 $config['proxy_ips'] = '';
 date_default_timezone_set('Asia/Jakarta');
+
+// React frontend host
+$config['frontend_host'] = "http://192.168.17.74:5173";

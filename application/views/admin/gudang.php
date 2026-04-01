@@ -115,7 +115,7 @@
   </form>
 </div>
 <div class="table-responsive">
-  <table class="table table-striped" id="datatable" style="width: 100%;">
+  <table class="table table-striped" id="datatable">
     <thead>
       <tr>
         <th>No</th>

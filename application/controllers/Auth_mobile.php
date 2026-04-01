@@ -10,11 +10,12 @@ class Auth_mobile extends CI_Controller
 
     public function index()
     {
-        $data['title'] = 'Login Page';
-        $data['perusahaan'] = $this->db->query("SELECT * FROM tb_perusahaan order by id")->result();
-        $this->load->view('mobile/header.php', $data);
-        $this->load->view('mobile/login.php', $data);
-        $this->load->view('mobile/footer.php');
+        // $data['title'] = 'Login Page';
+        // $data['perusahaan'] = $this->db->query("SELECT * FROM tb_perusahaan order by id")->result();
+        // $this->load->view('mobile/header.php', $data);
+        // $this->load->view('mobile/login.php', $data);
+        // $this->load->view('mobile/footer.php');
+        redirect($this->config->item('frontend_host'));
     }
 
     public function login()

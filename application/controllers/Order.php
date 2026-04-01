@@ -518,7 +518,7 @@ class Order extends CI_Controller
 		$data['view'] = 'admin/history';
 		$data['title'] = 'history Order';
 		$id_perusahaan = $this->session->userdata('perusahaan_id');
-
+		// var_dump($status);
 		if ($status == "1") {
 			$data['detail']	= $this->db->query("SELECT tor.*, tp.nama as perusahaan, tc.nama_customer, tc.tipe_harga, tu.nama as sales from tb_order tor
 			join tb_customer tc on tor.id_customer = tc.id
@@ -536,7 +536,13 @@ class Order extends CI_Controller
 			order by tor.id desc
 			")->result();
 		} else {
-			$data['detail']	= [];
+			$data['detail']	= $this->db->query("SELECT tor.*, tp.nama as perusahaan, tc.nama_customer, tc.tipe_harga, tu.nama as sales from tb_order tor
+			join tb_customer tc on tor.id_customer = tc.id
+			left join tb_user tu on tc.id_sales = tu.id
+			join tb_perusahaan tp on tp.id = tor.id_perusahaan
+			where tor.status in (1, 2)
+			order by tor.id desc
+			")->result();
 		}
 		$data['status'] = $status;
 		$this->load->view('templates/header.php', $data);
