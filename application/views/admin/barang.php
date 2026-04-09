@@ -476,7 +476,7 @@ label {
         icon: 'warning',
         title: 'File terlalu besar',
         text: 'Ukuran file maksimal 5 MB',
-        confirmButtonColor: #d33,
+        confirmButtonColor: '#d33',
         confirmButtonText: 'OK'
       });
       $('#file_input').val('');
