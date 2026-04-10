@@ -115,115 +115,101 @@
   </form>
 </div>
 <div class="table-responsive">
-  <table class="table table-striped" id="datatable">
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Kode Artikel</th>
-        <th>Nama Artikel</th>
-        <th class="text-center">Stok</th>
-        <th>Terakhir Update</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php
-      if (isset($barang)):
-        $no = 1;
-        foreach ($barang as $row):
-          ?>
-          <tr>
-            <td><?php echo $no++ ?></td>
-            <td><?php echo $row->kode_artikel ?></td>
-            <td><?php echo $row->nama_artikel ?></td>
-            <td class="text-center">
-              <span class="badge badge-info">
-                <?= $row->stok ?>
-              </span>
-            </td>
-            <td>
-              <?php echo $row->updated_stok_at ? date('d-m-Y, H:i', strtotime($row->updated_stok_at)) : '-' ?>
-            </td>
-          </tr>
-          <?php
-        endforeach;
-      endif;
-      ?>
-    </tbody>
-  </table>
-  <div class="modal fade" id="modalPreviewImpor" tabindex="-1" aria-labelledby="modalPreviewLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
+    <table class="table table-striped table-hover border-bottom" id="datatable" style="width:100%">
+        <thead class="thead-light">
+            <tr>
+                <th width="5%">No</th>
+                <th width="20%">Kode Artikel</th>
+                <th>Nama Artikel</th>
+                <th class="text-center" width="10%">Stok</th>
+                <th width="20%">Terakhir Update</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (isset($barang) && !empty($barang)): ?>
+                <?php $no = 1; foreach ($barang as $row): ?>
+                <tr>
+                    <td class="align-middle"><?php echo $no++ ?></td>
+                    <td class="align-middle"><strong><?php echo $row->kode_artikel ?></strong></td>
+                    <td class="align-middle"><?php echo $row->nama_artikel ?></td>
+                    <td class="text-center align-middle">
+                        <span class="badge badge-pill badge-info px-3">
+                            <?= number_format($row->stok, 0, ',', '.') ?>
+                        </span>
+                    </td>
+                    <td class="align-middle">
+                        <?php if($row->updated_stok_at): ?>
+                            <span class="text-muted small">
+                                <i class="far fa-clock mr-1"></i>
+                                <?php echo date('d M Y, H:i', strtotime($row->updated_stok_at)) ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="text-muted">-</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
-        <div class="modal-header bg-info text-white">
-          <h5 class="modal-title" id="modalPreviewLabel">
-            <i class="fas fa-table me-2"></i> Preview Import — Item Cocok
-          </h5>
-          <button type="button" class="close" data-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <!-- Loading state -->
-          <div id="previewLoading" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2 text-muted">Membaca file Excel...</p>
-          </div>
-
-          <!-- Content (hidden until loaded) -->
-          <div id="previewContent" class="d-none">
-            <div class="alert alert-info d-flex align-items-center mb-3" id="previewSummary"></div>
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover align-middle">
-                <thead class="table-dark">
-                  <tr>
-                    <th>No</th>
-                    <th>Kode Artikel</th>
-                    <th>Nama Barang</th>
-                    <th>Stok DB (lama)</th>
-                    <th>Stok Excel (baru)</th>
-                    <th>Status Stok</th>
-                    <th>Ketersediaan</th>
-                  </tr>
-                </thead>
-                <tbody id="previewTableBody"></tbody>
-              </table>
+<div class="modal fade" id="modalPreviewImpor" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-import mr-2"></i> Preview Import — Item Cocok
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-          </div>
 
-          <!-- Empty state -->
-          <div id="previewEmpty" class="d-none text-center py-5">
-            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Tidak ada item yang cocok antara Excel dan database.</p>
-          </div>
-        </div>
+            <div class="modal-body">
+                <div id="previewLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Membaca file Excel...</p>
+                </div>
 
-        <div class="modal-footer d-flex justify-content-between align-items-start">
-          <div class="me-2">
-            <p>
-              <strong>Keterangan:</strong><br>
-              <span class="bg-success">&nbsp;&nbsp;&nbsp;</span> Data stok sama dan ada di kedua tempat (Database dan Excel)<br>
-              <span class="bg-danger">&nbsp;&nbsp;&nbsp;</span> Data tidak ada di Excel tapi ada di Database <br>
-              <span class="bg-warning">&nbsp;&nbsp;&nbsp;</span> Data ada di kedua tempat dan stoknya berbeda <br>
-              Ketika dikonfirmasi, Stok di Database akan terupdate dengan yang di Excel
-            </p>
-          </div>
-          <div class="d-flex gap-4">
-            <button type="button" id="btnCancel" class="btn btn-secondary mr-2" data-dismiss="modal">
-              Batal
-            </button>
-            <form action="<?php echo base_url('gudang/confirm_impor') ?>" id="formConfirm">
-              <!-- <input type="hidden" name="<#php echo $this->security->get_csrf_token_name() ?>"
-                          value="<#php echo $this->security->get_csrf_hash() ?>"> -->
-              <button type="submit" class="btn btn-success" id="btnConfirm" disabled>
-                <i class="fas fa-check me-1"></i> Konfirmasi & Simpan
-              </button>
-            </form>
-          </div>
+                <div id="previewContent" class="d-none">
+                    <div class="alert alert-info border-0 shadow-sm mb-4" id="previewSummary"></div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle">
+                            <thead class="bg-light text-uppercase small font-weight-bold">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Kode Artikel</th>
+                                    <th>Nama Barang</th>
+                                    <th class="text-center">Stok DB (lama)</th>
+                                    <th class="text-center">Stok Excel (baru)</th>
+                                    <th class="text-center">Status Stok</th>
+                                    <th>Ketersediaan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <div class="text-left small text-muted">
+                  <p class="mb-0"><strong>Keterangan Warna:</strong></p>
+                    <span class="badge badge-success">&nbsp;</span> Cocok | 
+                    <span class="badge badge-warning">&nbsp;</span> Beda Stok
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary me-3" data-dismiss="modal">Batal</button>
+                    <form class="d-inline" action="<?php echo base_url('gudang/confirm_impor') ?>" id="formConfirm">
+                      <button type="submit" class="btn btn-success" id="btnConfirm" disabled>
+                        <i class="fas fa-check me-1"></i> Konfirmasi & Simpan
+                      </button>
+                    </form>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 <script>
   $('#formImpor').on('submit', function (e) {

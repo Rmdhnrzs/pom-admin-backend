@@ -96,7 +96,7 @@
               <li class="nav-item <?= ($title == 'Dashboard') ? 'active' : '' ?>">
                 <a class="nav-link" href="<?= base_url('Dashboard') ?>"><i class="fas fa-chart-line"></i> Dashboard</a>
               </li>
-              <?php if ($role_id == 1) { ?>
+              <?php if ($role_id == 1) : ?>
                 <li class="nav-item dropdown <?= ($title == 'Data Barang' || $title == 'Data Customer') ? 'active' : '' ?>">
                   <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-database"></i> Data Master
@@ -118,15 +118,21 @@
                 <li class="nav-item <?= ($title == 'Data User') ? 'active' : '' ?>">
                   <a class="nav-link" href="<?= base_url('User') ?>"><i class="fas fa-user"></i> User</a>
                 </li>
-              <?php } ?>
+              <?php endif; ?>
               <li class="nav-item <?= ($title == 'Gudang') ? 'active' : '' ?>">
                 <a class="nav-link" href="<?= base_url('Gudang') ?>">
                   <i class="fas fa-file-excel"></i> Gudang
                 </a>
               </li>
+              <?php if ($role_id == 3) : ?>
+              <li class="nav-item">
+                <a class="nav-link" href="<?= base_url('Barang') ?>">
+                  <i class="fas fa-list"></i> Barang
+                </a>
+              </li>
+              <?php endif; ?>
             </ul>
             <ul class="navbar-nav ml-auto">
-
               <div class="topbar-divider d-none d-sm-block"></div>
 
               <!-- Nav Item - User Information -->

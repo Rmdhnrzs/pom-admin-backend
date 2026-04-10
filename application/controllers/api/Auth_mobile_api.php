@@ -132,7 +132,7 @@ class Auth_Mobile_Api extends Api_Controller
         }
 
         $this->checkAuth();
-        $id_user = $this->current_user->id;
+        $id_user = $this->input->get('id');
         $password = $this->input->post('pass');
 
         if (!$password) {

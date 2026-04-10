@@ -1,12 +1,12 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 require_once APPPATH . 'controllers/api/Api_Controller.php';
+
 class Keranjang_Api extends Api_Controller {
 
     public function __construct() {
         parent::__construct();
         $this->checkAuth();
-        // $this->checkCsrf();
     }
 
     // -----------------------------------------------------------------------
@@ -60,6 +60,13 @@ class Keranjang_Api extends Api_Controller {
 		return $total;
 	}
     public function proses() {
+        if ($this->input->method() !== 'post') {
+            return $this->response([
+                'status' => false,
+                'message' => 'Method not allowed'
+            ], 405);
+        }
+
         $id_customer   = $this->input->post('id_customer');
         $tipe_po       = $this->input->post('tipe_po');
         $catatan       = $this->input->post('catatan');

@@ -45,7 +45,7 @@ class Auth extends CI_Controller
                     redirect(base_url('Sales_order/customer'));
                     break;
                 case 3:
-                    redirect(base_url('Gudang'));
+                    redirect(base_url('Dashboard'));
                     break;
                 default:
                     redirect(base_url('Auth/login'));

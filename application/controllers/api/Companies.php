@@ -5,7 +5,6 @@ class Companies extends Api_Controller {
     public function __construct()
     {
         parent::__construct();
-        // $this->checkAuth();
     }
     public function index()
     {

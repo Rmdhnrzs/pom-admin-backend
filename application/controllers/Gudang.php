@@ -60,9 +60,6 @@ class Gudang extends CI_Controller {
 		}
 
 		$excelData = [];
-		$existInDB  = []; // matched: exists in both
-		$onlyInDB   = []; // exists in DB but not in Excel
-		$onlyInExcel = []; // exists in Excel but not in DB
 
 		// Step 1: index excel data by kode_artikel for easy lookup
 		foreach ($data as $index => $row) {
@@ -89,23 +86,6 @@ class Gudang extends CI_Controller {
 		}
 
 		// Step 3: compare
-		
-		// foreach ($dbData as $kode => $dbRow) {
-		// 	if (!isset($excelData[$kode])) {
-		// 		// $matched[] = $dbRow;
-		// 		// exists in DB but not in Excel
-		// 		$matched = [
-		// 			'id' => $dbRow['id'],
-		// 			'kode_artikel' => $kode,
-		// 			'nama_excel'   => '-',
-		// 			'stok_excel'   => '-',
-		// 			'nama_db'      => $dbRow['nama'],
-		// 			'stok_db'      => (int) $dbRow['stok'],
-		// 			'changed' => null,
-		// 			'is_exist' => true,
-		// 		];
-		// 	}
-		// }
 		$matched = [];
 		foreach ($excelData as $kode => $excelRow) {
 			// exists in both
@@ -122,36 +102,23 @@ class Gudang extends CI_Controller {
 					'in_db_only'   => false,
 				];
 			} 
-			// else {
-			// 	// exists in Excel but not in DB
-			// 	$matched[] = [
-			// 		'id' => 0,
-			// 		'kode_artikel' => $kode,
-			// 		'nama_excel'   => $excelRow['nama'],
-			// 		'stok_excel'   => (int) $excelRow['stok'],
-			// 		'nama_db'      => '-',
-			// 		'stok_db'      => '-',
-			// 		'changed' => null,
-			// 		'is_exist' => false,
-			// 	];
-			// }
 		}
 
-		foreach ($dbData as $kode => $dbRow) {
-			if (!isset($excelData[$kode])) {
-				$matched[] = [
-					'id'           => $dbRow['id'],
-					'kode_artikel' => $kode,
-					'nama_excel'   => '-',
-					'stok_excel'   => '-',
-					'nama_db'      => $dbRow['nama'],
-					'stok_db'      => (int) $dbRow['stok'],
-					'changed'      => null,
-					'is_exist'     => true,
-					'in_db_only'   => true,
-				];
-			}
-		}
+		// foreach ($dbData as $kode => $dbRow) {
+		// 	if (!isset($excelData[$kode])) {
+		// 		$matched[] = [
+		// 			'id'           => $dbRow['id'],
+		// 			'kode_artikel' => $kode,
+		// 			'nama_excel'   => '-',
+		// 			'stok_excel'   => '-',
+		// 			'nama_db'      => $dbRow['nama'],
+		// 			'stok_db'      => (int) $dbRow['stok'],
+		// 			'changed'      => null,
+		// 			'is_exist'     => true,
+		// 			'in_db_only'   => true,
+		// 		];
+		// 	}
+		// }
 		
 		$this->session->set_userdata('impor_matched', $matched);
 		echo json_encode([
@@ -162,12 +129,13 @@ class Gudang extends CI_Controller {
 	public function confirm_impor() {
 		$matched = $this->session->userdata('impor_matched');
 		if (empty($matched)) {
-			echo json_encode(['success' => false, 'message' => 'Tidak ada data untuk 	dikonfirmasi.']);
+			echo json_encode(['success' => false, 'message' => 'Tidak ada data untuk dikonfirmasi.']);
 			return;
 		}
 
 		foreach ($matched as $row) {
-			$this->db->where('kode_artikel', $row['kode_artikel'])->update('tb_barang', [
+			$this->db->where('kode_artikel', $row['kode_artikel'])
+				->where('deleted_at', null)->update('tb_barang', [
 				'stok' => $row['stok_excel'],
 				'updated_stok_at' => date('Y-m-d H:i:s'),
 			]);

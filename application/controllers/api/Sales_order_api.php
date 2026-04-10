@@ -17,8 +17,6 @@ class Sales_order_api extends Api_Controller {
             ], 405);
         }
 
-        // if($this->checkAuth()) return;
-
         $id_customer = $this->input->get('id_customer');
         $tipe_customer = $this->input->get('tipe_customer');
         $tipe_po = $this->input->get('tipe_po');
@@ -33,7 +31,7 @@ class Sales_order_api extends Api_Controller {
 
         $tipe = $this->getPriceType($tipe_customer, $tipe_po);
 
-        $produk = $this->db->query("SELECT id, TRIM(kode_artikel) as kode_artikel, nama_artikel, satuan, $tipe as harga, size, stok, kelipatan from tb_barang where $tipe > 0 and status=1 and id_perusahaan = '$perusahaan_id' order by kode_artikel")->result();
+        $produk = $this->db->query("SELECT id, TRIM(kode_artikel) as kode_artikel, nama_artikel, satuan, $tipe as harga, size, stok, kelipatan from tb_barang where $tipe > 0 and deleted_at is null and id_perusahaan = '$perusahaan_id' order by kode_artikel")->result();
 
         return $this->response([
             'status' => true,
@@ -93,13 +91,11 @@ class Sales_order_api extends Api_Controller {
             ], 405);
         }
 
-        // $this->checkAuth();
-
         $tanggal = $this->input->get('tanggal');
         if (!$tanggal) {
             $tanggal = date("Y-m-d");
         }
-
+        
         $pt = $this->current_user->perusahaan_id;
         $id_user = $this->current_user->id;
 
@@ -120,7 +116,7 @@ class Sales_order_api extends Api_Controller {
             ], 405);
         }
 
-        // $this->checkAuth();
+        $this->checkAuth();
 
         $id = $this->input->get('id');
 
