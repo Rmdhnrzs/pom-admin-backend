@@ -50,7 +50,7 @@ class Gudang_Api extends Api_Controller {
         
         ['columns' => $columns, 'condition' => $condition] = $this->getPriceType($tipe_po);
         
-		$data['barang'] = $this->db->query("SELECT tb_barang.id, tb_barang.kode_artikel, tb_barang.nama_artikel, tb_barang.stok, tb_barang.kelipatan, tb_barang.satuan, tb_barang.size, tb_perusahaan.nama as nama_perusahaan, tb_perusahaan.id as id_perusahaan, $columns from tb_barang join tb_perusahaan on tb_barang.id_perusahaan = ? where tb_barang.deleted_at is null and tb_barang.nama_artikel like ? and $condition order by id desc", [$perusahaan_id, "%$nama_artikel%"])->result();
+		$data['barang'] = $this->db->query("SELECT tb_barang.id, tb_barang.kode_artikel, tb_barang.nama_artikel, tb_barang.stok, tb_barang.kelipatan, tb_barang.satuan, tb_barang.size, tb_perusahaan.nama as nama_perusahaan, tb_perusahaan.id as id_perusahaan, $columns from tb_barang join tb_perusahaan on tb_perusahaan.id = ? where tb_barang.deleted_at is null and tb_barang.nama_artikel like ? and $condition order by id desc", [$perusahaan_id, "%$nama_artikel%"])->result();
 		
 		$this->response([
             'success' => true,
