@@ -398,9 +398,26 @@ label {
               'border': '1px solid red'
             });
             $('#kode_add').val('');
+          } else if (response.pernah_ada) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Perhatian',
+              text: 'Kode ini pernah digunakan sebelumnya dan sudah dihapus. Yakin ingin menggunakan kode ini?',
+              showCancelButton: true,
+              confirmButtonText: 'Ya, Lanjut',
+              cancelButtonText: 'Batal'
+            }).then((result) => {
+              if(!result.isConfirmed) {
+                $('#kode_add').val('');
+                $('#kode_add').css({'border': '1px solid orange'});
+              } else {
+                $('#kode_add').css({'border': ''});
+              }
+            });
           } else {
-            $("#kode_status").html(""); // Hapus pesan jika kode tidak ada di database
-            $("button[type='submit']").prop("disabled", false); // Enable kembali tombol submit jika kode tidak ada
+            $("#kode_status").html("");
+            $('#kode_add').css({'border': ''});
+            $("button[type='submit']").prop("disabled", false);
           }
         }
       });

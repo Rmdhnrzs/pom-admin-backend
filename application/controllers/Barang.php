@@ -17,7 +17,7 @@ class Barang extends CI_Controller
 	{
 		$data['view'] = 'admin/barang';
 		$data['title'] = 'Data Barang';
-		$data['barang'] = $this->db->query("SELECT tb_barang.*, tb_perusahaan.nama as nama_perusahaan, tb_perusahaan.id as id_perusahaan from tb_barang join tb_perusahaan on tb_barang.id_perusahaan = tb_perusahaan.id where status = 1  order by id desc")->result();
+		$data['barang'] = $this->db->query("SELECT tb_barang.*, tb_perusahaan.nama as nama_perusahaan, tb_perusahaan.id as id_perusahaan from tb_barang join tb_perusahaan on tb_barang.id_perusahaan = tb_perusahaan.id where tb_barang.deleted_at IS NULL order by id desc")->result();
 		$data['perusahaan'] = $this->db->query("SELECT * from tb_perusahaan order by id")->result();
 		$this->load->view('templates/header.php', $data);
 		$this->load->view('templates/index.php', $data);
@@ -133,7 +133,7 @@ class Barang extends CI_Controller
 	public function hapus_data($id)
 	{
 		// Proses penghapusan data berdasarkan ID
-		$this->db->query("UPDATE tb_barang set status = 0 where id = '$id'");
+		$this->db->query("UPDATE tb_barang set deleted_at = NOW() where id = '$id'");
 		tampil_alert('success', 'DI HAPUS', 'Data Barang berhasil di hapus');
 		redirect(base_url('Barang'));
 	}
@@ -143,12 +143,13 @@ class Barang extends CI_Controller
 		// Ambil data kode barang yang dikirim melalui AJAX
 		$kode = $this->input->post('kode');
 
-		// Lakukan pengecekan kode barang di database
-		$query = $this->db->get_where('tb_barang', array('kode_artikel' => $kode));
-		$result = $query->row();
+		$aktif = $this->db->query("SELECT * FROM tb_barang WHERE kode_artikel='$kode' AND deleted_at IS NULL")->row();
+		$dihapus = $this->db->query("SELECT * FROM tb_barang WHERE kode_artikel='$kode' AND deleted_at IS NOT NULL")->row();
 
-		// Buat respons dalam format JSON
-		$response = array('exist' => ($result !== null));
+		$response = array (
+			'exist' => ($aktif !== null),
+			'pernah_ada' => ($dihapus !== null),
+		);
 		echo json_encode($response);
 	}
 	public function preview_import()

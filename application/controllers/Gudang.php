@@ -14,16 +14,16 @@ class Gudang extends CI_Controller {
 		}
     }
     public function index() {
-        $data['view'] = 'admin/gudang';
+		$data['view'] = 'admin/gudang';
 		$data['title'] = 'Gudang';
-		$data['barang'] = $this->db->query("SELECT tb_barang.*, tb_perusahaan.nama as nama_perusahaan, tb_perusahaan.id as id_perusahaan from tb_barang join tb_perusahaan on tb_barang.id_perusahaan = tb_perusahaan.id where status = 1  order by id desc")->result();
+		$data['barang'] = $this->db->query("SELECT tb_barang.*, tb_perusahaan.nama as nama_perusahaan, tb_perusahaan.id as id_perusahaan FROM tb_barang JOIN tb_perusahaan ON tb_barang.id_perusahaan = tb_perusahaan.id WHERE tb_barang.deleted_at IS NULL ORDER BY tb_barang.id DESC")->result();
 		$this->load->view('templates/header.php', $data);
 		$this->load->view('templates/index.php', $data);
 		$this->load->view('templates/footer.php');
-    }
+	}
 
 	public function impor() {
-		$barang = $this->db->query("SELECT * FROM tb_barang WHERE status = 1")->result();
+		$barang = $this->db->query("SELECT * FROM tb_barang WHERE deleted_at IS NULL")->result();
 		
 		  // --- Validation ---
 		if (!isset($_FILES['excel_file']) || $_FILES['excel_file']['error'] !== UPLOAD_ERR_OK) {

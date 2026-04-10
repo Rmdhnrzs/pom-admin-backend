@@ -23,49 +23,43 @@ class Barang_Import_lib {
             $result = [];
 
             foreach ($excel as $kode => $row) {
-                if (!empty($row['duplicate'])) {
-                    $result[] = [
-                        'kode' => $kode,
-                        'status' => 'duplicate',
-                        'errors'=> ['Duplikat dalam file'],
-                        'changes' => [],
-                        'excel' => $row,
-                        'db' => null,
-                    ];
-                    continue;
-                }
+    if (!empty($row['duplicate'])) {
+        $result[] = [
+            'kode' => $kode,
+            'status' => 'duplicate',
+            'errors'=> ['Duplikat dalam file'],
+            'changes' => [],
+            'excel' => $row,
+            'db' => null,
+        ];
+        continue;
+    }
 
-                $errors = $this->validateRow($row);
+    $errors = $this->validateRow($row);
 
-                if (isset($db[$kode])) {
-                    $dbRow = $db[$kode];
-                    $changeFields = $this->detectChanges($row, $dbRow);
-
-                    $status = !empty($errors)
-                        ? 'error'
-                        : (!empty($changeFields) ? 'update' : 'no_change');
-
-                    $result[] = [
-                        'kode' => $kode,
-                        'status' => $status,
-                        'errors'=> $errors,
-                        'changes' => $changeFields,
-                        'excel' => $row,
-                        'db' => $dbRow,
-                    ];
-                } else {
-                    $deletedRow = isset($db[$kode]) && (int)$db[$kode]['status'] === 0 ? $db[$kode] : null;
-
-                    $result[] = [
-                        'kode' => $kode,
-                        'status' => !empty($errors) ? 'error' : 'insert',
-                        'errors' => $errors,
-                        'changes' => [],
-                        'excel' => $row,
-                        'db' => $deletedRow,
-                    ];
-                }
-            }
+    if (isset($db[$kode]) && empty($db[$kode]['deleted_at'])) {
+        $dbRow = $db[$kode];
+        $changeFields = $this->detectChanges($row, $dbRow);
+        $status = !empty($errors) ? 'error' : (!empty($changeFields) ? 'update' : 'no_change');
+        $result[] = [
+            'kode'    => $kode,
+            'status'  => $status,
+            'errors'  => $errors,
+            'changes' => $changeFields,
+            'excel'   => $row,
+            'db'      => $dbRow,
+        ];
+    } else {
+        $result[] = [
+            'kode'    => $kode,
+            'status'  => !empty($errors) ? 'error' : 'insert',
+            'errors'  => $errors,
+            'changes' => [],
+            'excel'   => $row,
+            'db'      => null,
+        ];
+    }
+}
 
             $summary = [
                 'total' => count($result),
@@ -107,37 +101,32 @@ class Barang_Import_lib {
             $skipped = 0;
  
             foreach ($excel as $kode => $row) {
- 
+
                 if (!empty($row['duplicate'])) {
                     $skipped++;
                     continue;
                 }
- 
+
                 if (!empty($this->validateRow($row))) {
                     $skipped++;
                     continue;
                 }
- 
+
                 $data = $this->prepareData($row, $id_perusahaan, $id_user);
- 
+
                 if (isset($db[$kode])) {
-                    if ($this->doUpdate($db[$kode], $data)) {
-                        $update++;
-                    }
-                } else {
-                    $deleted = $this->CI->db->get_where('tb_barang', [
-                        'kode_artikel' => $kode,
-                        'status'       => 0,
-                    ])->row();
- 
-                    if ($deleted) {
-                        $data['status'] = 1;
-                        $this->CI->db->update('tb_barang', $data, ['id' => $deleted->id]);
+                    if (!empty($db[$kode]['deleted_at'])) {
+                        $data['deleted_at'] = NULL;
+                        $this->CI->db->update('tb_barang', $data, ['id' => $db[$kode]['id']]);
                         $update++;
                     } else {
-                        $data['status'] = 1;
-                        $insert[]       = $data;
+                        if ($this->doUpdate($db[$kode], $data)) {
+                            $update++;
+                        }
                     }
+                } else {
+                    $data['deleted_at'] = NULL;
+                    $insert[] = $data;
                 }
             }
  
@@ -347,7 +336,7 @@ class Barang_Import_lib {
             throw new \Exception('Perusahaan tidak ditemukan');
         }
  
-        $rows   = $this->CI->db->get_where('tb_barang', [])->result();
+        $rows   = $this->CI->db->query("SELECT * FROM tb_barang")->result();
         $result = [];
  
         foreach ($rows as $r) {
@@ -367,7 +356,7 @@ class Barang_Import_lib {
                 'indo_barat'    => $r->indo_barat,
                 'special_price' => $r->special_price,
                 'barang_x'      => $r->barang_x,
-                'status'        => $r->status,
+                'deleted_at'        => $r->deleted_at,
             ];
         }
  
@@ -426,24 +415,17 @@ class Barang_Import_lib {
 
     private function doUpdate(array $dbRow, array $data): bool
     {
+        $skip = ['updated_at', 'id_user', 'id_perusahaan', 'deleted_at'];
 
-        if ((int)$dbRow['status'] === 0) {
-            $data['status'] = 1;
-            $this->CI->db->update('tb_barang', $data, ['id' => $dbRow['id']]);
-            return true;
-        }
- 
-        $skip = ['updated_at', 'id_user', 'id_perusahaan', 'status'];
- 
         foreach ($data as $field => $val) {
             if (in_array($field, $skip) || !isset($dbRow[$field])) continue;
- 
+
             if ((string)$dbRow[$field] !== (string)$val) {
                 $this->CI->db->update('tb_barang', $data, ['id' => $dbRow['id']]);
                 return true;
             }
         }
- 
+
         return false;
     }
 }
