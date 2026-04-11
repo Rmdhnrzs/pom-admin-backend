@@ -142,9 +142,21 @@ class Barang extends CI_Controller
 	{
 		// Ambil data kode barang yang dikirim melalui AJAX
 		$kode = $this->input->post('kode');
+		$id_perusahaan = $this->input->post('id_perusahaan');
 
-		$aktif = $this->db->query("SELECT * FROM tb_barang WHERE kode_artikel='$kode' AND deleted_at IS NULL")->row();
-		$dihapus = $this->db->query("SELECT * FROM tb_barang WHERE kode_artikel='$kode' AND deleted_at IS NOT NULL")->row();
+		$aktif = $this->db->get_where('tb_barang', [
+			'kode_artikel' => $kode,
+			'id_perusahaan' => $id_perusahaan,
+			'deleted_at' => null,
+		])->row();
+
+		$dihapus = $this->db->query("
+			SELECT * FROM tb_barang 
+			WHERE kode_artikel = ? 
+			AND id_perusahaan = ?
+			AND deleted_at IS NOT NULL
+			LIMIT 1
+		", [$kode, $id_perusahaan])->row();
 
 		$response = array (
 			'exist' => ($aktif !== null),
@@ -159,6 +171,7 @@ class Barang extends CI_Controller
 				'success' => false,
 				'error' => 'Unauthorized',
 			]);
+			return;
 		}
 		
 		$result = $this->barang_import_lib->preview(

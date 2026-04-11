@@ -217,7 +217,7 @@ label {
     </div>
 
     <div class="table-responsive">
-      <table class="table table-stripped" id="datatable" style="width: 100%;">
+      <table class="table table-striped" id="datatable" style="width: 100%;">
         <thead>
           <tr>
             <th>No</th>
@@ -374,57 +374,69 @@ label {
 </script>
 <script>
   $(document).ready(function() {
-    // Fungsi untuk melakukan pemeriksaan kode barang saat pengguna mengetikkan
     $("#kode_add").on("blur", function() {
-      var kodeBarang = $(this).val();
+      var kodeBarang = $(this).val().trim();
+      var idPerusahaan = $("#perusahaan_add").val();
 
-      // Mengirimkan kode barang ke server untuk memeriksa keberadaannya di database
+      if (!kodeBarang) return;
+
+      if (!idPerusahaan) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Perusahaan belum dipilih',
+          text: 'Silakan pilih perusahaan terlebih dahulu sebelum mengisi kode barang.'
+        });
+        $('#kode_add').val('');
+        return;
+      }
+
       $.ajax({
         url: "<?php echo base_url('Barang/check_kode_exist'); ?>",
         method: "POST",
         data: {
-          kode: kodeBarang
+          kode: kodeBarang,
+          id_perusahaan: idPerusahaan
         },
         dataType: "json",
         success: function(response) {
           if (response.exist) {
-            // Jika kode sudah ada di database, tampilkan pesan
             Swal.fire(
               'Kode Artikel sudah ada',
-              'Harap cek kembali / gunakan kode yang lain',
+              'Kode ini sudah digunakan pada perusahaan yang dipilih.',
               'info'
             );
-            $('#kode_add').css({
-              'border': '1px solid red'
-            });
+            $('#kode_add').css({ 'border': '1px solid red' });
             $('#kode_add').val('');
           } else if (response.pernah_ada) {
             Swal.fire({
               icon: 'warning',
               title: 'Perhatian',
-              text: 'Kode ini pernah digunakan sebelumnya dan sudah dihapus. Yakin ingin menggunakan kode ini?',
+              text: 'Kode ini pernah digunakan sebelumnya pada perusahaan ini dan sudah dihapus. Yakin ingin menggunakan kode ini?',
               showCancelButton: true,
               confirmButtonText: 'Ya, Lanjut',
               cancelButtonText: 'Batal'
             }).then((result) => {
-              if(!result.isConfirmed) {
+              if (!result.isConfirmed) {
                 $('#kode_add').val('');
-                $('#kode_add').css({'border': '1px solid orange'});
+                $('#kode_add').css({ 'border': '1px solid orange' });
               } else {
-                $('#kode_add').css({'border': ''});
+                $('#kode_add').css({ 'border': '' });
               }
             });
           } else {
-            $("#kode_status").html("");
-            $('#kode_add').css({'border': ''});
-            $("button[type='submit']").prop("disabled", false);
+            $('#kode_add').css({ 'border': '' });
           }
+        },
+        error: function(xhr) {
+          console.log(xhr.responseText);
+          Swal.fire('Error', xhr.responseText || 'Gagal memeriksa kode barang.', 'error');
         }
       });
     });
+
     $("#kategori_add").on("change", function() {
       var kategori = $(this).val();
-      if (kategori === "1") { // Membandingkan dengan string "1"
+      if (kategori === "1") {
         $("#retail_add,#grosir_add,#grosir_10_add,#het_jawa_add,#indo_barat_add,#sp_add").prop("readonly", true);
         $("#retail_add,#grosir_add,#grosir_10_add,#het_jawa_add,#indo_barat_add,#sp_add,#barang_x_add").val('');
         $("#barang_x_add").prop("readonly", false);
@@ -434,9 +446,10 @@ label {
         $("#barang_x_add").prop("readonly", true);
       }
     });
+
     $("#kategori").on("change", function() {
       var kategori = $(this).val();
-      if (kategori === "1") { // Membandingkan dengan string "1"
+      if (kategori === "1") {
         $("#retail,#grosir,#grosir_10,#het_jawa,#indo_barat,#sp").prop("readonly", true);
         $("#retail,#grosir,#grosir_10,#het_jawa,#indo_barat,#sp,#barang_x").val('');
         $("#barang_x").prop("readonly", false);
@@ -446,217 +459,220 @@ label {
         $("#barang_x").prop("readonly", true);
       }
     });
-
   });
 </script>
 
 <script>
-  $(document).ready(function(){
+  $(document).ready(function() {
 
-  $('#import_perusahaan').on('change', function(){
-    if($('#file_input')[0].files.length > 0){
-      $('#file_input').trigger('change');
-    }
-  });
-
-  // Reset form import saat modal ditutup
-  $('#modal_import').on('hidden.bs.modal', function() {
-    $('#file_input').val('');
-
-    $('#import_perusahaan').val('');
-
-    // Sembunyikan semua section preview
-    $('#preview_excel').addClass('d-none');
-    $('#summary_import').addClass('d-none');
-    $('#warning_import').addClass('d-none');
-    $('#loading_import').addClass('d-none');
-    
-    // Kosongkan isi tabel preview
-    $('#preview_body').html('');
-    
-    // Reset summary angka
-    $('#sum_total, #sum_nochange, #sum_update, #sum_insert, #sum_error').text('0');
-    
-    // Enable tombol import kembali
-    $('#btn_import').prop('disabled', false).text('Import');
-  })
-  $('#file_input').on('change', function(){
-
-    let file = this.files[0];
-    let id_perusahaan = $('#import_perusahaan').val();
-
-    if(!file) return;
-
-    const maxSize = 5 * 1024 *1024;
-    if(file.size > maxSize){
-      Swal.fire({
-        icon: 'warning',
-        title: 'File terlalu besar',
-        text: 'Ukuran file maksimal 5 MB',
-        confirmButtonColor: '#d33',
-        confirmButtonText: 'OK'
-      });
-      $('#file_input').val('');
-      return;
-    }
-
-    if(!id_perusahaan){
-      Swal.fire({
-        icon: 'warning',
-        title: 'Perusahan Belum dipilih',
-        text: 'Silahkan pilih perusahaan terlebih dahulu sebelum upload file',
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: 'OK'
-      });
-      $('#file_input').val('');
-      return;
-    }
-
-    $('#loading_import').removeClass('d-none');
-    $('#preview_excel').addClass('d-none');
-    $('#summary_import').addClass('d-none');
-    $('#warning_import').addClass('d-none');
-
-    let formData = new FormData();
-    formData.append('file', file);
-    formData.append('id_perusahaan', id_perusahaan);
-
-    $.ajax({
-      url: '<?= base_url("Barang/preview_import") ?>',
-      type: 'POST',
-      data: formData,
-      processData: false,
-      contentType: false,
-      dataType: 'json',
-
-      success: function(res){
-
-        $('#loading_import').addClass('d-none');
-
-        if(!res.success){
-          Swal.fire({
-            icon: 'error',
-            title: 'Gagal',
-            text: res.error,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'OK'
-          })
-          return;
-        }
-
-        let html = '';
-        let summary = res.data.summary;
-        console.log('Summary:', summary);
-        console.log('DEBUG:', JSON.stringify(res.data.debug, null, 2));
-        res.data.items.forEach(function(item){
-
-          // Tampilkan insert, update, dan error
-          if(item.status !== 'insert' && item.status !== 'update' && item.status !== 'error') return;
-
-          let badge = '', rowClass = '';
-
-          if(item.status === 'insert'){
-            badge    = '<span class="badge badge-danger">Baru</span>';
-            rowClass = 'table-danger';
-          } else if(item.status === 'update'){
-            badge    = '<span class="badge badge-warning">Update</span>';
-            rowClass = 'table-warning';
-          } else if(item.status === 'error') {
-              let errMsg = item.errors.join(', ');
-              badge    = '<span class="badge badge-dark" title="'+errMsg+'" style="cursor:help">⚠ Error</span>'
-                        + '<br><small class="text-danger">'+errMsg+'</small>';
-              rowClass = 'table-secondary';
-          }
-
-          html += `
-            <tr class="${rowClass}">
-              <td>${badge}</td>
-              <td>${item.kode}</td>
-              <td>${$('#import_perusahaan option:selected').text()}</td>
-              <td>${item.excel.nama || '-'}</td>
-              <td>${item.excel.keterangan || '-'}</td>
-              <td>${item.excel.size || '-'}</td>
-              <td>${item.excel.satuan || '-'}</td>
-              <td>${item.excel.kelipatan || 1}</td>
-              <td>${formatRupiah(item.excel.retail || 0)}</td>
-              <td>${formatRupiah(item.excel.grosir || 0)}</td>
-              <td>${formatRupiah(item.excel.grosir_10 || 0)}</td>
-              <td>${formatRupiah(item.excel.het_jawa || 0)}</td>
-              <td>${formatRupiah(item.excel.indo_barat || 0)}</td>
-              <td>${formatRupiah(item.excel.special_price || 0)}</td>
-              <td>${formatRupiah(item.excel.barang_x || 0)}</td>
-            </tr>
-          `;
-        });
-
-        if(html === ''){
-          html = '<tr><td colspan="15" class="text-center text-muted">Tidak ada data baru atau perubahan</td></tr>';
-        }
-        
-        let errCount = (summary.error || 0) + (summary.duplicate || 0);
-
-        $('#preview_body').html(html);
-        $('#preview_excel').removeClass('d-none');
-
-        $('#sum_total').text(summary.total);
-        $('#sum_nochange').text(summary.no_change);
-        $('#sum_update').text(summary.update);
-        $('#sum_insert').text(summary.insert);
-        $('#sum_error').text(errCount);
-        $('#summary_import').removeClass('d-none');
-
-        // Disable tombol import kalau ada error
-        if(errCount > 0){
-            $('#btn_import').prop('disabled', true).attr('title', 'Tidak bisa import, ada ' + errCount + ' data bermasalah');
-        } else {
-            $('#btn_import').prop('disabled', false).attr('title', '');
-        }
-        $('#warning_import').removeClass('d-none');
-      },
-
-      error: function(){
-        $('#loading_import').addClass('d-none');
-        alert('Gagal menghubungi server');
+    $('#import_perusahaan').on('change', function() {
+      if ($('#file_input')[0].files.length > 0) {
+        $('#file_input').trigger('change');
       }
     });
 
-  });
+    $('#modal_import').on('hidden.bs.modal', function() {
+      $('#file_input').val('');
+      $('#import_perusahaan').val('');
 
-  function doImport(form){
-    let formData = new FormData(form);
-    $('#btn_import').prop('disabled', true).text('Importing...');
-    $.ajax({
+      $('#preview_excel').addClass('d-none');
+      $('#summary_import').addClass('d-none');
+      $('#warning_import').addClass('d-none');
+      $('#loading_import').addClass('d-none');
+
+      $('#preview_body').html('');
+      $('#sum_total, #sum_nochange, #sum_update, #sum_insert, #sum_error').text('0');
+
+      $('#btn_import').prop('disabled', false).text('Import').attr('title', '');
+    });
+
+    $('#file_input').on('change', function() {
+      let file = this.files[0];
+      let id_perusahaan = $('#import_perusahaan').val();
+
+      if (!file) return;
+
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'File terlalu besar',
+          text: 'Ukuran file maksimal 5 MB',
+          confirmButtonColor: '#d33',
+          confirmButtonText: 'OK'
+        });
+        $('#file_input').val('');
+        return;
+      }
+
+      if (!id_perusahaan) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Perusahaan belum dipilih',
+          text: 'Silakan pilih perusahaan terlebih dahulu sebelum upload file',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        $('#file_input').val('');
+        return;
+      }
+
+      $('#loading_import').removeClass('d-none');
+      $('#preview_excel').addClass('d-none');
+      $('#summary_import').addClass('d-none');
+      $('#warning_import').addClass('d-none');
+
+      let formData = new FormData();
+      formData.append('file', file);
+      formData.append('id_perusahaan', id_perusahaan);
+
+      $.ajax({
+        url: '<?= base_url("Barang/preview_import") ?>',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+
+        success: function(res) {
+          $('#loading_import').addClass('d-none');
+
+          if (!res.success) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Gagal',
+              text: res.error || 'Terjadi kesalahan saat preview import.',
+              confirmButtonColor: '#d33',
+              confirmButtonText: 'OK'
+            });
+            return;
+          }
+
+          let html = '';
+          let summary = res.data.summary || {};
+          let selectedPerusahaan = $('#import_perusahaan option:selected').text();
+
+          res.data.items.forEach(function(item) {
+            if (item.status !== 'insert' && item.status !== 'update' && item.status !== 'error') return;
+
+            let badge = '';
+            let rowClass = '';
+
+            if (item.status === 'insert') {
+              badge = '<span class="badge badge-danger">Baru</span>';
+              rowClass = 'table-danger';
+            } else if (item.status === 'update') {
+              badge = '<span class="badge badge-warning">Update</span>';
+              rowClass = 'table-warning';
+            } else if (item.status === 'error') {
+              let errMsg = (item.errors || []).join(', ');
+              badge = '<span class="badge badge-dark">Error</span><br><small class="text-danger">' + errMsg + '</small>';
+              rowClass = '';
+            }
+
+            html += `
+              <tr class="${rowClass}">
+                <td>${badge}</td>
+                <td>${item.kode || '-'}</td>
+                <td>${selectedPerusahaan || '-'}</td>
+                <td>${item.excel.nama || '-'}</td>
+                <td>${item.excel.keterangan || '-'}</td>
+                <td>${item.excel.size || '-'}</td>
+                <td>${item.excel.satuan || '-'}</td>
+                <td>${item.excel.kelipatan || 1}</td>
+                <td>${formatRupiah(item.excel.retail || 0)}</td>
+                <td>${formatRupiah(item.excel.grosir || 0)}</td>
+                <td>${formatRupiah(item.excel.grosir_10 || 0)}</td>
+                <td>${formatRupiah(item.excel.het_jawa || 0)}</td>
+                <td>${formatRupiah(item.excel.indo_barat || 0)}</td>
+                <td>${formatRupiah(item.excel.special_price || 0)}</td>
+                <td>${formatRupiah(item.excel.barang_x || 0)}</td>
+              </tr>
+            `;
+          });
+
+          if (html === '') {
+            html = '<tr><td colspan="15" class="text-center text-muted">Tidak ada data baru atau perubahan</td></tr>';
+          }
+
+          let errCount = (summary.error || 0) + (summary.duplicate || 0);
+
+          $('#preview_body').html(html);
+          $('#preview_excel').removeClass('d-none');
+
+          $('#sum_total').text(summary.total || 0);
+          $('#sum_nochange').text(summary.no_change || 0);
+          $('#sum_update').text(summary.update || 0);
+          $('#sum_insert').text(summary.insert || 0);
+          $('#sum_error').text(errCount);
+          $('#summary_import').removeClass('d-none');
+
+          if (errCount > 0) {
+            $('#btn_import')
+              .prop('disabled', true)
+              .attr('title', 'Tidak bisa import, ada ' + errCount + ' data bermasalah');
+          } else {
+            $('#btn_import')
+              .prop('disabled', false)
+              .attr('title', '');
+          }
+
+          $('#warning_import').removeClass('d-none');
+        },
+
+        error: function(xhr) {
+          $('#loading_import').addClass('d-none');
+          console.log(xhr.responseText);
+          Swal.fire({
+            icon: 'error',
+            title: 'Server Error',
+            text: xhr.responseText || 'Gagal menghubungi server'
+          });
+        }
+      });
+    });
+
+    function doImport(form) {
+      let formData = new FormData(form);
+      $('#btn_import').prop('disabled', true).text('Importing...');
+
+      $.ajax({
         url: $(form).attr('action'),
         type: 'POST',
         data: formData,
         processData: false,
         contentType: false,
         dataType: 'json',
-        success: function(res){
-            $('#btn_import').prop('disabled', false).text('Import');
-            if(!res.success){
-                Swal.fire('Error', res.error, 'error');
-                return;
-            }
-            Swal.fire({
-                icon: 'success',
-                title: 'Import Berhasil',
-                html: '<b>'+res.data.inserted+'</b> data ditambahkan<br><b>'+res.data.updated+'</b> data diupdate'
-            }).then(() => { location.reload(); });
-        },
-        error: function(){
-            $('#btn_import').prop('disabled', false).text('Import');
-            Swal.fire('Error', 'Server error', 'error');
-        }
-    });
-}
+        success: function(res) {
+          $('#btn_import').prop('disabled', false).text('Import');
 
-  $('#form_import').on('submit', function(e){
+          if (!res.success) {
+            Swal.fire('Error', res.error || 'Import gagal', 'error');
+            return;
+          }
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Import Berhasil',
+            html: '<b>' + (res.data.inserted || 0) + '</b> data ditambahkan<br><b>' + (res.data.updated || 0) + '</b> data diupdate'
+          }).then(() => {
+            location.reload();
+          });
+        },
+        error: function(xhr) {
+          $('#btn_import').prop('disabled', false).text('Import');
+          console.log(xhr.responseText);
+          Swal.fire('Error', xhr.responseText || 'Server error', 'error');
+        }
+      });
+    }
+
+    $('#form_import').on('submit', function(e) {
       e.preventDefault();
       doImport(this);
-  });
+    });
 
-});
+  });
 </script>
 <script>
   // Aktifkan semua tooltip di halaman

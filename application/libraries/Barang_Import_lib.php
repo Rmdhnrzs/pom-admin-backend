@@ -329,18 +329,21 @@ class Barang_Import_lib {
         if (empty($id_perusahaan)) {
             throw new \Exception('ID Perusahaan tidak dikirim');
         }
- 
+
         $perusahaan = $this->CI->db->get_where('tb_perusahaan', ['id' => $id_perusahaan])->row();
- 
+
         if (!$perusahaan) {
             throw new \Exception('Perusahaan tidak ditemukan');
         }
- 
-        $rows   = $this->CI->db->query("SELECT * FROM tb_barang")->result();
+
+        $rows = $this->CI->db
+            ->get_where('tb_barang', ['id_perusahaan' => $id_perusahaan])
+            ->result();
+
         $result = [];
- 
+
         foreach ($rows as $r) {
-            $kode          = $this->normalize($r->kode_artikel);
+            $kode = $this->normalize($r->kode_artikel);
             $result[$kode] = [
                 'id'            => $r->id,
                 'kode'          => $kode,
@@ -356,17 +359,11 @@ class Barang_Import_lib {
                 'indo_barat'    => $r->indo_barat,
                 'special_price' => $r->special_price,
                 'barang_x'      => $r->barang_x,
-                'deleted_at'        => $r->deleted_at,
+                'deleted_at'    => $r->deleted_at,
             ];
         }
- 
-        $semuaPT      = $this->CI->db->get('tb_perusahaan')->result();
-        $perusahaanMap = [];
-        foreach ($semuaPT as $p) {
-            $perusahaanMap[strtoupper(trim($p->nama))] = $p->id;
-        }
- 
-        return ['items' => $result, 'map' => $perusahaanMap];
+
+        return ['items' => $result];
     }
 
     private function detectChanges(array $excelRow, array $dbRow): array
