@@ -134,7 +134,7 @@ class Order extends CI_Controller
 		join tb_customer tc on td.id_customer = tc.id
 		join tb_perusahaan tp on tp.id = tc.id_perusahaan
 		left join tb_user tu on td.id_user = tu.id where td.id ='$id'")->row();
-		$data['detail']	= $this->db->query("SELECT tod.*, tb.keterangan, tb.kode_artikel,tb.nama_artikel, tb.stok, tb.satuan,tb.size,tc.margin, td.diskon, td.status as order_status from tb_order_detail tod
+		$data['detail']	= $this->db->query("SELECT tod.*, tb.keterangan, tb.kode_artikel,tb.nama_artikel, tb.stok, tb.satuan, tb.size, tc.margin, td.diskon, td.status as order_status from tb_order_detail tod
 		join tb_order td on tod.id_order = td.id
 		join tb_barang tb on tod.id_barang = tb.id
 		join tb_customer tc on td.id_customer = tc.id where tod.id_order = '$id' order by tod.id
@@ -373,11 +373,11 @@ class Order extends CI_Controller
 		$tahunBulan = date('Y-m', strtotime('tomorrow'));
 		$id_perusahaan = $query->row()->id_perusahaan;
 		if ($id_perusahaan == 2) {
-		$nomorUrutan = "SO-PKP-$tahunBulan";
-		$kode_pajak = "T";
+			$nomorUrutan = "SO-PKP-$tahunBulan";
+			$kode_pajak = "T";
 		} else {
-		$nomorUrutan = "SO-$tahunBulan";
-		$kode_pajak = "P";
+			$nomorUrutan = "SO-$tahunBulan";
+			$kode_pajak = "P";
 		}
 		$no_faktur  = $nomorUrutan . "-" . $no_urut;
 
@@ -488,18 +488,18 @@ class Order extends CI_Controller
 					break;
 				}
 
-				$this->db->update('tb_barang', [
-					'stok' => $remainingStok
-				], [
-					'id' => $data->id_barang
-				]);
+				// $this->db->update('tb_barang', [
+				// 	'stok' => $remainingStok
+				// ], [
+				// 	'id' => $data->id_barang
+				// ]);
 
 				$row++;
 			}
 				
-			if ($isStokBelowZero){
-				tampil_alert('error', 'GAGAL', 'Hasil pengurangan Stok tidak boleh dibawah 0');
-			}
+			// if ($isStokBelowZero){
+			// 	tampil_alert('error', 'GAGAL', 'Hasil pengurangan Stok tidak boleh dibawah 0');
+			// }
 			// Create Excel writer
 			$writer = new Xlsx($spreadsheet);
 

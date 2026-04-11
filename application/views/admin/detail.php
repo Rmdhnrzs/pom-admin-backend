@@ -106,7 +106,7 @@
             <th style="width:8%" class="text-center">Size</th>
             <th style="width:7%" class="text-center">QTY</th>
             <th style="width:4%" class="text-center">Stok</th>
-            <th style="width:8%" class="text-center">Sisa stok</th>
+            <!-- <th style="width:8%" class="text-center">Sisa stok</th> -->
             <th style="width:8%" class="text-center">Satuan</th>
             <th style="width:12%" class="text-right">Harga Satuan</th>
             <th style="width:7%" class="text-center">Margin</th>
@@ -129,19 +129,20 @@
               </td>
               <td class="text-center"><?= $d->qty ?></td>
               <td class="text-center">
-                <?php if($d->order_status): ?>
+                <?= $d->stok ?>
+                <!-- <#php if($d->order_status): #>
                     -
-                  <?php else: ?>
-                    <?= $d->stok ?>
-                <?php endif; ?>
+                  <#php else: #>
+                    <#= $d->stok #>
+                <#php endif; #> -->
               </td>
-              <td class="text-center">
-                <?php if($d->order_status): ?>
+              <!-- <td class="text-center">
+                <#php if($d->order_status): #>
                   -
-                <?php else: ?>
-                  <?= $d->stok - $d->qty ?>
-                <?php endif; ?>
-              </td>
+                <#php else: #>
+                  <#= $d->stok - $d->qty #>
+                <#php endif; #>
+              </td> -->
               <td class="text-center"><?= $d->satuan ?></td>
               <td class="text-right">Rp <?= rupiah($d->harga) ?></td>
               <td class="text-center"><?= $d->diskon_barang ?></td>
@@ -157,17 +158,17 @@
             $stoktotal = ($d->stok - $d->qty);
           endforeach ?>
           <tr>
-            <td colspan="9" class="text-right"><strong>SubTotal :</strong></td>
+            <td colspan="8" class="text-right"><strong>SubTotal :</strong></td>
             <td></td>
             <td class="text-right"><strong> Rp. <?= rupiah($subtotal) ?></strong></td>
           </tr>
           <tr>
-            <td colspan="9" class="text-right"><strong>Diskon :</strong></td>
+            <td colspan="8" class="text-right"><strong>Diskon :</strong></td>
             <td class="text-center"><?= $order->diskon ?></td>
             <td class="text-right">Rp. <?= rupiah($subtotal * $diskonValue / 100) ?></td>
           </tr>
           <tr>
-            <td colspan="9" class="text-right"><strong>GrandTotal :</strong></td>
+            <td colspan="8" class="text-right"><strong>GrandTotal :</strong></td>
             <td></td>
             <td class="text-right"><strong>Rp. <?= rupiah($grandtotal) ?></strong></td>
           </tr>

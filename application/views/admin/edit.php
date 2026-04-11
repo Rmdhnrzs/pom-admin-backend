@@ -73,7 +73,7 @@
                          <th class="text-center" style="width:8%">Size</th>
                          <th class="text-center" style="width:9%">QTY</th>
                          <th class="text-center">Stok</th>
-                         <th class="text-center">Sisa stok</th>
+                         <!-- <th class="text-center">Sisa stok</th> -->
                          <th class="text-center" style="width:8%">Satuan</th>
                          <th class="text-right">Harga Satuan</th>
                          <th style="width:7%" class="text-center">Margin</th>
@@ -100,7 +100,7 @@
                                  <input type="hidden" name="id_detail[]" min="0" value="<?= $d->id ?>" class="form-control form-control-sm" required>
                              </td>
                              <td class="text-center stok item-<?= $d->id ?>"><?= $d->stok ?></td>
-                             <td class="text-center sisastok item-<?= $d->id ?>"><?= $d->stok - $d->qty  ?></td>
+                             <!-- <td class="text-center sisastok item-<#= $d->id ?>"><?= $d->stok - $d->qty  ?></td> -->
                              <td class="text-center"><?= $d->satuan ?></td>
                              <td class="text-right harga">Rp <?= rupiah($d->harga) ?></td>
                              <td class="text-center diskonHarga"><?= $d->diskon_barang ?></td>
@@ -118,7 +118,7 @@
                              $diskon_p          = $subtotal * $diskonValue / 100;
                              $grandtotal        = $subtotal - $diskon_p;
                              $totalstok = 0;
-                             $totalstok += $d->stok - $d->qty;
+                            //  $totalstok += $d->stok - $d->qty;
                      endforeach?>
                      <tr>
                         <td colspan="7" class="text-right"><strong>SubTotal :</strong></td>
@@ -201,12 +201,12 @@
                                  <input type="text" id="satuan" class="form-control form-control-sm" readonly>
                              </div>
                          </div>
-                         <div class="col-md-4">
+                         <!-- <div class="col-md-4">
                              <div class="form-group mb-0">
                                  <label for="">Stok</label>
                                  <input type="text" id="stok" class="form-control form-control-sm" readonly>
                              </div>
-                         </div>
+                         </div> -->
                          <div class="col-md-4">
                              <div class="form-group mb-0">
                                  <label for="">Harga</label>
@@ -278,17 +278,17 @@
             var stok = parseInt($('#stok').val());
             var value = parseInt($(this).val());
 
-            if (value > stok) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal',
-                    text: 'Kuantitas order tidak boleh melebihi jumlah stok barang!',
-                    confirmButtonText: 'OK'
-                });
-                $(this).prop('disabled', true);
-            } else {
-                $(this).prop('disabled', false);
-            }
+            // if (value > stok) {
+            //     Swal.fire({
+            //         icon: 'error',
+            //         title: 'Gagal',
+            //         text: 'Kuantitas order tidak boleh melebihi jumlah stok barang!',
+            //         confirmButtonText: 'OK'
+            //     });
+            //     $(this).prop('disabled', true);
+            // } else {
+            //     $(this).prop('disabled', false);
+            // }
          });
 
          $("#diskonFaktur").change(function() {
@@ -393,16 +393,16 @@
         var stok = parseInt($(`.stok.${itemClass}`).text());
         var qty_edit = parseInt(inputElement.val());
         var result = stok - qty_edit;
-        if (result < 0) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal',
-                text: 'Kuantitas order tidak boleh melebihi jumlah stok barang!',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            $(`.sisastok.${itemClass}`).text(result);
-            $(`.sisastok.${itemClass}`).addClass('bg-warning');
-        }
+        // if (result < 0) {
+        //     Swal.fire({
+        //         icon: 'error',
+        //         title: 'Gagal',
+        //         text: 'Kuantitas order tidak boleh melebihi jumlah stok barang!',
+        //         confirmButtonText: 'OK'
+        //     });
+        // } else {
+        //     $(`.sisastok.${itemClass}`).text(result);
+        //     $(`.sisastok.${itemClass}`).addClass('bg-warning');
+        // }
     }
  </script>
