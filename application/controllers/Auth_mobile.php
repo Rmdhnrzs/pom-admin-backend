@@ -9,7 +9,7 @@ class Auth_mobile extends CI_Controller
     }
 
     public function index()
-    {
+    {       
         redirect($this->config->item('frontend_host'));
     }
 

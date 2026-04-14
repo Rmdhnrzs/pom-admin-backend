@@ -116,7 +116,7 @@
 </div>
 <div class="table-responsive">
     <table class="table table-striped table-hover border-bottom" id="datatable" style="width:100%">
-        <thead class="thead-light">
+        <thead class="">
             <tr>
                 <th width="5%">No</th>
                 <th width="20%">Kode Artikel</th>
@@ -181,9 +181,9 @@
                                     <th>No</th>
                                     <th>Kode Artikel</th>
                                     <th>Nama Barang</th>
-                                    <th class="text-center">Stok DB (lama)</th>
-                                    <th class="text-center">Stok Excel (baru)</th>
-                                    <th class="text-center">Status Stok</th>
+                                    <th class="text-center">Stok</th>
+                                    <!-- <th class="text-center">Stok Excel (baru)</th> -->
+                                    <!-- <th class="text-center">Status Stok</th> -->
                                     <th>Ketersediaan</th>
                                 </tr>
                             </thead>
@@ -196,8 +196,8 @@
             <div class="modal-footer bg-light d-flex justify-content-between">
                 <div class="text-left small text-muted">
                   <p class="mb-0"><strong>Keterangan Warna:</strong></p>
-                    <span class="badge badge-success">&nbsp;</span> Cocok | 
-                    <span class="badge badge-warning">&nbsp;</span> Beda Stok
+                    <span class="badge badge-success">&nbsp;</span> Akan berhasil di impor | 
+                    <span class="badge badge-danger">&nbsp;</span> Akan gagal di impor
                 </div>
                 <div>
                     <button type="button" class="btn btn-secondary me-3" data-dismiss="modal">Batal</button>
@@ -259,20 +259,24 @@
         let changedCount = 0;
 
         $.each(matched, function (i, row) {
-          const rowClass = !row.is_exist ? 'table-primary'
-            : row.in_db_only ? 'table-danger'
-              : row.changed ? 'table-warning'
-                : 'table-success';
+          // const rowClass = !row.is_exist ? 'table-primary'
+          //   : row.in_db_only ? 'table-danger'
+          //     : row.changed ? 'table-warning'
+          //       : 'table-success';
+          const rowClass = row.in_db_only ? 'table-success' : 'table-danger';
 
-          const statusBadge = row.in_db_only ? '<span class="badge text-white bg-secondary">Tidak Berubah</span>'
-            : !row.is_exist ? '<span class="badge text-white bg-primary">Baru</span>'
-              : row.changed ? '<span class="badge bg-warning text-dark">Stok Berubah</span>'
-                : '<span class="badge text-white bg-secondary">Sama</span>';
-
-          const ketersediaanBadge = row.in_db_only ? '<span class="badge text-white bg-danger">Tidak ada di Excel</span>'
-            : !row.is_exist ? '<span class="badge text-white bg-primary">Tidak ada di DB</span>'
-              : '<span class="badge text-white bg-success">Ada di keduanya</span>';
-
+          // const statusBadge = row.in_db_only ? '<span class="badge text-white bg-secondary">Tidak Berubah</span>'
+          //   : !row.is_exist ? '<span class="badge text-white bg-primary">Baru</span>'
+          //     : row.changed ? '<span class="badge bg-warning text-dark">Stok Berubah</span>'
+          //       : '<span class="badge text-white bg-secondary">Sama</span>';
+          // const statusBadge = row.changed ? '<span class="badge bg-warning text-dark">Stok Berubah</span>'
+          //       : '<span class="badge text-white bg-secondary">Sama</span>';
+          // const ketersediaanBadge = row.in_db_only ? '<span class="badge text-white bg-danger">Tidak ada di Excel</span>'
+          //   : !row.is_exist ? '<span class="badge text-white bg-primary">Tidak ada di DB</span>'
+          //     : '<span class="badge text-white bg-success">Ada di keduanya</span>';
+          const ketersediaanBadge = row.in_db_only ? '<span class="badge text-white bg-success">Ada di database</span>'
+          : '<span class="badge text-white bg-danger">Tidak ada di database</span>'
+          
           const newStok = row.in_db_only ? '-'
             : row.changed ? `<strong class="text-danger">${row.stok_excel}</strong>`
               : row.stok_excel;
@@ -281,14 +285,22 @@
             changedCount++;
           }
 
-          rows += `
+        //   rows += `
+        // <tr class="${rowClass}">
+        //     <td>${i + 1}</td>
+        //     <td><code>${row.kode_artikel}</code></td>
+        //     <td>${row.in_db_only ? row.nama_db : row.nama_excel}</td>
+        //     <td>${row.stok_db}</td>
+        //     <td>${newStok}</td>
+        //     <td>${statusBadge}</td>
+        //     <td>${ketersediaanBadge}</td>
+        // </tr>`;
+        rows += `
         <tr class="${rowClass}">
             <td>${i + 1}</td>
-            <td><code>${row.kode_artikel}</code></td>
-            <td>${row.in_db_only ? row.nama_db : row.nama_excel}</td>
-            <td>${row.stok_db}</td>
-            <td>${newStok}</td>
-            <td>${statusBadge}</td>
+            <td><code>${row.kode}</code></td>
+            <td>${row.nama}</td>
+            <td>${row.stok}</td>
             <td>${ketersediaanBadge}</td>
         </tr>`;
         });
@@ -318,6 +330,7 @@
       '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Menyimpan...'
     );
     $('#btnCancel').prop('disabled', true);
+    console.log($(this).serialize())
     $.ajax({
       url: $(this).attr('action'),
       method: 'POST',

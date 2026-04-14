@@ -48,6 +48,7 @@
 
 .bg-barang { background: #4e73df; }
 .bg-customer { background: #1cc88a; }
+.bg-stok { background: #3a3d33}
 .bg-approve { background: #f6c23e; }
 .bg-done { background: #36b9cc; }
 </style>
@@ -66,10 +67,22 @@
         <div class="dashboard-card bg-barang">
           <div class="d-flex justify-content-between">
             <div>
-              <div class="label">Total Barang</div>
-              <div class="count"><?= $total_barang ?></div>
+              <div class="label">Total Barang/Artikel</div>
+              <div class="count"><?= number_format($total_barang) ?></div>
             </div>
             <i class="fa fa-box"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="dashboard-card bg-stok">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="label">Total Stok/Kuantitas</div>
+              <div class="count"><?= number_format($total_stok) ?></div>
+            </div>
+            <i class="fa fa-asterisk"></i>
           </div>
         </div>
       </div>
@@ -79,24 +92,26 @@
           <div class="d-flex justify-content-between">
             <div>
               <div class="label">Total Customer</div>
-              <div class="count"><?= $total_customer ?></div>
+              <div class="count"><?= number_format($total_customer) ?></div>
             </div>
             <i class="fa fa-users"></i>
           </div>
         </div>
       </div>
-
+      
+      <?php if($this->session->userdata('role_id') != 3): ?>
       <div class="col-md-4 mb-3">
         <div class="dashboard-card bg-approve">
           <div class="d-flex justify-content-between">
             <div>
-              <div class="label">Menunggu Approve</div>
-              <div class="count"><?= $so_pending ?></div>
+              <div class="label">Menunggu Approve PO</div>
+              <div class="count"><?= number_format($so_pending) ?></div>
             </div>
             <i class="fa fa-clock"></i>
           </div>
         </div>
       </div>
+      <?php endif; ?>
       <!-- 
       <div class="col-md-3 mb-3">
         <div class="dashboard-card bg-done">
@@ -108,8 +123,7 @@
             <i class="fa fa-check-circle"></i>
           </div>
         </div>
-      </div>
-       -->
+      </div> -->
 
     </div>
 

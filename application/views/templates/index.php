@@ -125,7 +125,7 @@
                 </a>
               </li>
               <?php if ($role_id == 3) : ?>
-              <li class="nav-item">
+              <li class="nav-item <?= ($title == 'Data Barang') ? 'active' : '' ?>">
                 <a class="nav-link" href="<?= base_url('Barang') ?>">
                   <i class="fas fa-list"></i> Barang
                 </a>

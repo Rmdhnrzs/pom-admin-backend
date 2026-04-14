@@ -92,16 +92,28 @@ class Gudang extends CI_Controller {
 			if (isset($dbData[$kode])) {
 				$matched[] = [
 					'id' => $dbData[$kode]['id'],
-					'kode_artikel' => $kode,
-					'nama_excel'   => $excelRow['nama'],
-					'stok_excel'   => (int) $excelRow['stok'],
-					'nama_db'      => $dbData[$kode]['nama'],
-					'stok_db'      => (int) $dbData[$kode]['stok'],
+					'kode' => $kode,
+					// 'nama_excel'   => $excelRow['nama'],
+					// 'stok_excel'   => (int) $excelRow['stok'],
+					'nama' => $dbData[$kode]['nama'],
+					'stok' => $dbData[$kode]['stok'],
+					// 'nama_db'      => $dbData[$kode]['nama'],
+					// 'stok_db'      => (int) $dbData[$kode]['stok'],
 					'changed' => $dbData[$kode]['stok'] != $excelRow['stok'],
+					// 'is_exist'     => true,
+					'in_db_only'   => true,
+				];
+			} else {
+				$matched[] = [
+					'id' => '',
+					'kode' => $kode,
+					'nama'      => $excelRow['nama'],
+					'stok'   => (int) $excelRow['stok'],
+					'changed'      => null,
 					'is_exist'     => true,
 					'in_db_only'   => false,
 				];
-			} 
+			}
 		}
 
 		// foreach ($dbData as $kode => $dbRow) {
@@ -119,6 +131,7 @@ class Gudang extends CI_Controller {
 		// 		];
 		// 	}
 		// }
+
 		
 		$this->session->set_userdata('impor_matched', $matched);
 		echo json_encode([
@@ -134,9 +147,9 @@ class Gudang extends CI_Controller {
 		}
 
 		foreach ($matched as $row) {
-			$this->db->where('kode_artikel', $row['kode_artikel'])
+			$this->db->where('kode_artikel', $row['kode'])
 				->where('deleted_at', null)->update('tb_barang', [
-				'stok' => $row['stok_excel'],
+				'stok' => $row['stok'],
 				'updated_stok_at' => date('Y-m-d H:i:s'),
 			]);
 		}

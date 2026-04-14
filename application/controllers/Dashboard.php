@@ -17,7 +17,7 @@ class Dashboard extends CI_Controller {
 		
 		$data['total_barang'] = $this->db->count_all('tb_barang');
 		$data['total_customer'] = $this->db->count_all('tb_customer');
-
+		$data['total_stok'] = $this->db->select_sum('stok', 'total_stok')->where('deleted_at is null')->get('tb_barang')->row()->total_stok;
 		$data['so_pending'] = $this->db->where('status', 0)->count_all_results('tb_order');
 		// $data['so_approved'] = $this->db->where('status', 1)->count_all_results('tb_order');
 
