@@ -535,7 +535,7 @@ class Order extends CI_Controller
 			left join tb_user tu on tor.id_user = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status = 1
-			and date(tor.exported_date) between '$tanggal_awal' and '$tanggal_akhir'
+			and date(tor.tanggal_dibuat) between '$tanggal_awal' and '$tanggal_akhir'
 			order by tor.id desc
 			")->result();
 		} elseif ($status == "2") {
@@ -544,7 +544,7 @@ class Order extends CI_Controller
 			left join tb_user tu on tc.id_sales = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status = 2
-			and date(tor.exported_date) between '$tanggal_awal' and '$tanggal_akhir'
+			and date(tor.tanggal_dibuat) between '$tanggal_awal' and '$tanggal_akhir'
 			order by tor.id desc
 			")->result();
 		} else {
@@ -553,7 +553,7 @@ class Order extends CI_Controller
 			left join tb_user tu on tc.id_sales = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status in (1, 2)
-			and date(tor.exported_date) between '$tanggal_awal' and '$tanggal_akhir'
+			and date(tor.tanggal_dibuat) between '$tanggal_awal' and '$tanggal_akhir'
 			order by tor.id desc
 			")->result();
 		}
