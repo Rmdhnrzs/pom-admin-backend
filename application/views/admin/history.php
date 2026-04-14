@@ -90,11 +90,11 @@
   }
 
   .custom-select-filter {
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  padding: 6px 10px;
-  font-size: 12px;
-  transition: all 0.2s ease;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    font-size: 12px;
+    transition: all 0.2s ease;
   }
 
   .custom-select-filter:focus {
@@ -105,9 +105,7 @@
 
 <div class="card shadow-sm custom-card">
 
-  <!-- Header -->
   <div class="card-header custom-header d-flex justify-content-between align-items-center">
-
     <div class="d-flex align-items-center">
       <div class="icon-box mr-3 d-flex align-items-center justify-content-center">
         <i class="fas fa-file-alt text-primary"></i>
@@ -117,31 +115,43 @@
         <small>Riwayat data pesanan customer</small>
       </div>
     </div>
-
   </div>
 
   <div class="card-body">
 
-    <!-- Filter -->
     <form action="<?= base_url('Order/history') ?>" method="get">
-      <div class="d-flex align-items-center mb-3">
-        <span style="font-size:12px; color:#666;" class="mr-2">
+      <div class="d-flex align-items-center mb-3" style="gap:10px; flex-wrap:wrap;">
+        
+        <span style="font-size:12px; color:#666;">
           <i class="fa fa-filter"></i> Filter:
         </span>
 
-        <select name="s" 
+        <select 
+          name="s" 
           class="form-control form-control-sm custom-select-filter" 
-          style="width:200px;"
-          onchange="this.form.submit()">
-          
+          style="width:200px;">
           <option value="">Semua Status</option>
-          <option value="1" <?= ($status == 1 ? 'selected' : '') ?>>Diproses</option>
-          <option value="2" <?= ($status == 2 ? 'selected' : '') ?>>Ditolak</option>
+          <option value="1" <?= ($status == "1" ? 'selected' : '') ?>>Diproses</option>
+          <option value="2" <?= ($status == "2" ? 'selected' : '') ?>>Ditolak</option>
         </select>
+
+        <input 
+          type="month" 
+          name="bulan" 
+          class="form-control form-control-sm custom-select-filter"
+          style="width:180px;"
+          value="<?= $bulan ?>">
+
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="fa fa-search"></i> Tampilkan
+        </button>
       </div>
+
+      <small class="text-muted d-block mb-3">
+        Menampilkan history periode <b><?= date('F Y', strtotime($bulan . '-01')) ?></b>
+      </small>
     </form>
 
-    <!-- Tabel -->
     <div class="table-responsive">
       <table class="table table-striped" id="datatable" style="width: 100%;">
         <thead>
@@ -167,11 +177,11 @@
             <td><?= jenis_so($d->jenis) ?></td>
             <td><?= $d->sales ?></td>
             <td><?= $d->referensi ?></td>
-            <td><?= $d->tanggal_dibuat ?></td>
+            <td><?= date('d-m-Y', strtotime($d->tanggal_dibuat)) ?></td>
             <td><?= status_so($d->status) ?></td>
             <td class="text-center">
               <div class="action-group">
-                <a href="<?= base_url('Order/detail/' . $d->id) ?>" 
+                <a href="<?= base_url('Order/detailHistory/' . $d->id) ?>" 
                   class="btn btn-info btn-sm btn-action">
                   <i class="fa fa-eye"></i>
                 </a>

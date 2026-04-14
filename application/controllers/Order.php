@@ -515,9 +515,19 @@ class Order extends CI_Controller
 	public function history()
 	{
 		$status = $this->input->get('s');
+		$bulan = $this->input->get('bulan');
 		$data['view'] = 'admin/history';
 		$data['title'] = 'history Order';
 		$id_perusahaan = $this->session->userdata('perusahaan_id');
+
+		if (empty($bulan)) {
+			$bulan = date('Y-m');
+		}
+		
+		// periode 1 bulan 
+		$tanggal_awal = date('Y-m-01', strtotime($bulan . '-01'));
+		$tanggal_akhir = date('Y-m-t', strtotime($bulan . '-01'));
+
 		// var_dump($status);
 		if ($status == "1") {
 			$data['detail']	= $this->db->query("SELECT tor.*, tp.nama as perusahaan, tc.nama_customer, tc.tipe_harga, tu.nama as sales from tb_order tor
@@ -525,6 +535,7 @@ class Order extends CI_Controller
 			left join tb_user tu on tor.id_user = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status = 1
+			and date(tor.exported_date) between '$tanggal_awal' and '$tanggal_akhir'
 			order by tor.id desc
 			")->result();
 		} elseif ($status == "2") {
@@ -533,6 +544,7 @@ class Order extends CI_Controller
 			left join tb_user tu on tc.id_sales = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status = 2
+			and date(tor.exported_date) between '$tanggal_awal' and '$tanggal_akhir'
 			order by tor.id desc
 			")->result();
 		} else {
@@ -541,10 +553,15 @@ class Order extends CI_Controller
 			left join tb_user tu on tc.id_sales = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status in (1, 2)
+			and date(tor.exported_date) between '$tanggal_awal' and '$tanggal_akhir'
 			order by tor.id desc
 			")->result();
 		}
 		$data['status'] = $status;
+		$data['tanggal_awal'] = $tanggal_awal;
+		$data['tanggal_akhir'] = $tanggal_akhir;
+		$data['bulan'] = $bulan;
+
 		$this->load->view('templates/header.php', $data);
 		$this->load->view('templates/index.php', $data);
 		$this->load->view('templates/footer.php');
