@@ -185,7 +185,110 @@ label {
 .btn-danger.btn-action:hover {
   background: #c82333;
 }
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 0 18px;
+}
+
+.table-toolbar-left,
+.table-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Tombol Download */
+.btn-download-table {
+  background: #eef4ff;
+  color: #2c7be5;
+  border: 1px solid #cfe0ff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-download-table:hover {
+  background: #dceaff;
+  color: #1a68d1;
+  text-decoration: none;
+}
+
+/* Tombol Print */
+.btn-print-table {
+  background: #fff8ee;
+  color: #e67e22;
+  border: 1px solid #fcd9a8;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-print-table:hover {
+  background: #fdebd0;
+  color: #ca6f1e;
+}
+
+.dataTables_filter {
+  margin: 0 !important;
+}
+
+.dataTables_filter label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dataTables_filter input {
+  margin-left: 6px !important;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  min-width: 220px;
+}
+
+.dataTables_filter input:focus {
+  border-color: #2c7be5;
+  outline: none;
+  box-shadow: 0 0 0 0.15rem rgba(44, 123, 229, 0.15);
+}
+
+@media (max-width: 768px) {
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-toolbar-right {
+    width: 100%;
+  }
+
+  .dataTables_filter input {
+    min-width: 100%;
+    margin-left: 0 !important;
+    margin-top: 6px;
+  }
+}
 </style>
+
 <div class="card shadow-sm custom-card">
   <!-- Header -->
   <div class="card-header custom-header d-flex justify-content-between align-items-center">
@@ -200,91 +303,115 @@ label {
       </div>
     </div>
     <!-- Kanan -->
-     <div>
+    <div>
       <button type="button" class="btn btn-light btn-sm mr-2" data-toggle="modal" data-target="#modal_import">
         <i class="fas fa-file-import"></i> Import Barang
       </button>
       <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal_tambah">
         <i class="fas fa-plus"></i> Tambah Barang
       </button>
-     </div>
+    </div>
   </div>
 
-  <div class="card-body">
-    <div class="d-flex justify-content-between mb-3">
-      <div id="dt-buttons"></div>
+  <!-- Toolbar: Download + Print + Search -->
+  <div class="table-toolbar mt-3">
+    <div class="table-toolbar-left">
+
+      <!-- Dropdown Download per PT -->
+      <div class="dropdown">
+        <button type="button" class="btn-download-table dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-download"></i> Download Data Barang
+        </button>
+        <div class="dropdown-menu shadow-sm" style="min-width: 200px; border-radius: 8px; border: 1px solid #cfe0ff; padding: 6px;">
+          <a class="dropdown-item" href="<?= base_url('Barang/export_excel') ?>" style="border-radius: 6px; font-size: 12px; padding: 7px 12px;">
+            <i class="fas fa-layer-group mr-2 text-primary"></i> Semua PT
+          </a>
+          <div class="dropdown-divider"></div>
+          <?php foreach ($perusahaan as $p) { ?>
+            <a class="dropdown-item" href="<?= base_url('Barang/export_excel/' . $p->id) ?>" style="border-radius: 6px; font-size: 12px; padding: 7px 12px;">
+              <i class="fas fa-building mr-2 text-secondary"></i> <?= strtoupper($p->nama) ?>
+            </a>
+          <?php } ?>
+        </div>
+      </div>
+
+      <button type="button" class="btn-print-table" onclick="printDataBarang()">
+        <i class="fas fa-print"></i> Print
+      </button>
+    </div>
+    <div class="table-toolbar-right">
       <div id="dt-search"></div>
     </div>
+  </div>
 
-    <div class="table-responsive">
-      <table class="table table-striped" id="datatable" style="width: 100%;">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>PT</th>
-            <th>Kode</th>
-            <th>Barang</th>
-            <th>Keterangan</th>
-            <th>Size</th>
-            <th>Satuan</th>
-            <th>Kelipatan</th>
-            <th>Retail</th>
-            <th>Grosir</th>
-            <th>Grosir_10</th>
-            <th>HET_Jawa</th>
-            <th>Indo_Barat</th>
-            <th>SP</th>
-            <th>Brg X</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php $no = 1; foreach ($barang as $k) { ?>
-          <tr>
-            <td><?= $no++ ?></td>
-            <td><?= strtoupper($k->nama_perusahaan) ?></td>
-            <td>
-              <?= $k->kode_artikel ?><br>
-              <?php if ($k->kategori == 1) { ?>
-                <span class="badge badge-danger badge-sm">Barang X</span>
-              <?php } ?>
-            </td>
-            <td><?= $k->nama_artikel ?></td>
-            <td><?= $k->keterangan ?></td>
-            <td><?= $k->size ?></td>
-            <td><?= $k->satuan ?></td>
-            <td><?= $k->kelipatan ?></td>
-            <td>Rp <?= number_format($k->retail) ?></td>
-            <td>Rp <?= number_format($k->grosir) ?></td>
-            <td>Rp <?= number_format($k->grosir_10) ?></td>
-            <td>Rp <?= number_format($k->het_jawa) ?></td>
-            <td>Rp <?= number_format($k->indo_barat) ?></td>
-            <td>Rp <?= number_format($k->special_price) ?></td>
-            <td>Rp <?= number_format($k->barang_x) ?></td>
-            <td>
-              <div class="action-group">
-                <button type="button" class="btn btn-warning btn-sm btn_edit"
-                  data-toggle="modal"
-                  data-target="#exampleModalCenter"
-                  onclick="getdetail('<?= $k->id ?>')">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-danger btn-sm btn-action btn_delete"
-                  data-id="<?= $k->id ?>">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
+  <div class="table-responsive">
+    <table class="table table-striped" id="datatable" style="width: 100%;">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>PT</th>
+          <th>Kode</th>
+          <th>Barang</th>
+          <th>Keterangan</th>
+          <th>Size</th>
+          <th>Satuan</th>
+          <th>Kelipatan</th>
+          <th>Retail</th>
+          <th>Grosir</th>
+          <th>Grosir_10</th>
+          <th>HET_Jawa</th>
+          <th>Indo_Barat</th>
+          <th>SP</th>
+          <th>Brg X</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php $no = 1; foreach ($barang as $k) { ?>
+        <tr>
+          <td><?= $no++ ?></td>
+          <td><?= strtoupper($k->nama_perusahaan) ?></td>
+          <td>
+            <?= $k->kode_artikel ?><br>
+            <?php if ($k->kategori == 1) { ?>
+              <span class="badge badge-danger badge-sm">Barang X</span>
+            <?php } ?>
           </td>
-          </tr>
-          <?php } ?>
-        </tbody>
-      </table>
-    </div>
+          <td><?= $k->nama_artikel ?></td>
+          <td><?= $k->keterangan ?></td>
+          <td><?= $k->size ?></td>
+          <td><?= $k->satuan ?></td>
+          <td><?= $k->kelipatan ?></td>
+          <td>Rp <?= number_format($k->retail) ?></td>
+          <td>Rp <?= number_format($k->grosir) ?></td>
+          <td>Rp <?= number_format($k->grosir_10) ?></td>
+          <td>Rp <?= number_format($k->het_jawa) ?></td>
+          <td>Rp <?= number_format($k->indo_barat) ?></td>
+          <td>Rp <?= number_format($k->special_price) ?></td>
+          <td>Rp <?= number_format($k->barang_x) ?></td>
+          <td>
+            <div class="action-group">
+              <button type="button" class="btn btn-warning btn-sm btn_edit"
+                data-toggle="modal"
+                data-target="#exampleModalCenter"
+                onclick="getdetail('<?= $k->id ?>')">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-danger btn-sm btn-action btn_delete"
+                data-id="<?= $k->id ?>">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <?php } ?>
+      </tbody>
+    </table>
   </div>
 </div>
-<!-- tambah barang -->
-<!-- Button trigger modal -->
- <?php $this->load->view('modal_barang'); ?>
+
+<?php $this->load->view('modal_barang'); ?>
+
 <script>
   function formatRupiah(angka) {
     var number_string = angka.toString().replace(/[^,\d]/g, ""),
@@ -303,15 +430,11 @@ label {
   }
 
   function getdetail(id) {
-    // Menggunakan Ajax untuk mengambil data artikel dari server
     $.ajax({
       url: '<?= base_url('Barang/getdata') ?>',
       type: 'GET',
-      data: {
-        id_barang: id
-      },
+      data: { id_barang: id },
       success: function(response) {
-        // Mengisi form dengan data artikel
         if (response) {
           $('#id_barang').val(response.id_barang);
           $('#perusahaan').val(response.perusahaan.toUpperCase());
@@ -329,7 +452,7 @@ label {
           $('#indo_barat').val(formatRupiah(response.indo_barat));
           $('#sp').val(formatRupiah(response.special_price));
           $('#barang_x').val(formatRupiah(response.barang_x));
-          if (response.kategori === '1') { // Membandingkan dengan string "1"
+          if (response.kategori === '1') {
             $("#retail,#grosir,#grosir_10,#het_jawa,#indo_barat,#sp").prop("readonly", true);
             $("#barang_x").prop("readonly", false);
           } else {
@@ -343,15 +466,193 @@ label {
       }
     });
   }
+
   $(document).ready(function() {
-    // Tambahkan event listener ke input retail, grosir, grosir_10, het_jawa, indo_barat, dan sp
-    $('#retail, #grosir, #grosir_10, #het_jawa, #indo_barat, #sp,#barang_x, #retail_add, #grosir_add, #grosir_10_add, #het_jawa_add, #indo_barat_add, #sp_add, #barang_x_add').on('keyup', function() {
-      var angka = $(this).val().replace(/[Rp.,]/g, ''); // Hilangkan karakter 'Rp', '.' dan ',' dari nilai input
-      var rupiah = formatRupiah(angka); // Ubah nilai menjadi format rupiah
-      $(this).val(rupiah); // Set nilai input menjadi format rupiah
+    $('#retail, #grosir, #grosir_10, #het_jawa, #indo_barat, #sp, #barang_x, #retail_add, #grosir_add, #grosir_10_add, #het_jawa_add, #indo_barat_add, #sp_add, #barang_x_add').on('keyup', function() {
+      var angka = $(this).val().replace(/[Rp.,]/g, '');
+      var rupiah = formatRupiah(angka);
+      $(this).val(rupiah);
     });
   });
+
+  function printDataBarang() {
+    var now = new Date();
+    var tgl = now.toLocaleDateString('id-ID', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    var rows = '';
+    var no = 1;
+    $('#datatable tbody tr').each(function() {
+      var cells = $(this).find('td');
+      if (cells.length === 0) return;
+
+      var pt          = $(cells[1]).text().trim();
+      var kode        = $(cells[2]).text().trim().replace(/\s+/g, ' ');
+      var barang      = $(cells[3]).text().trim();
+      var keterangan  = $(cells[4]).text().trim();
+      var size        = $(cells[5]).text().trim();
+      var satuan      = $(cells[6]).text().trim();
+      var kelipatan   = $(cells[7]).text().trim();
+      var retail      = $(cells[8]).text().trim();
+      var grosir      = $(cells[9]).text().trim();
+      var grosir10    = $(cells[10]).text().trim();
+      var hetJawa     = $(cells[11]).text().trim();
+      var indoBarat   = $(cells[12]).text().trim();
+      var sp          = $(cells[13]).text().trim();
+      var brgX        = $(cells[14]).text().trim();
+
+      var isBrgX = $(cells[2]).find('.badge-danger').length > 0;
+      var badgeHtml = isBrgX ? ' <span style="background:#dc3545;color:#fff;padding:1px 5px;border-radius:4px;font-size:9px;">X</span>' : '';
+
+      rows += '<tr>' +
+        '<td style="text-align:center;">' + no++ + '</td>' +
+        '<td>' + pt + '</td>' +
+        '<td>' + kode.split(' ')[0] + badgeHtml + '</td>' +
+        '<td>' + barang + '</td>' +
+        '<td>' + keterangan + '</td>' +
+        '<td style="text-align:center;">' + size + '</td>' +
+        '<td style="text-align:center;">' + satuan + '</td>' +
+        '<td style="text-align:center;">' + kelipatan + '</td>' +
+        '<td style="text-align:right;">' + retail + '</td>' +
+        '<td style="text-align:right;">' + grosir + '</td>' +
+        '<td style="text-align:right;">' + grosir10 + '</td>' +
+        '<td style="text-align:right;">' + hetJawa + '</td>' +
+        '<td style="text-align:right;">' + indoBarat + '</td>' +
+        '<td style="text-align:right;">' + sp + '</td>' +
+        '<td style="text-align:right;">' + brgX + '</td>' +
+      '</tr>';
+    });
+
+    var printContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Data Barang POM</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 10px; color: #222; background: #fff; }
+
+    /* Header */
+    .print-header {
+      text-align: center;
+      padding: 16px 20px 10px;
+      border-bottom: 2px solid #2c7be5;
+      margin-bottom: 12px;
+    }
+    .print-header .logo-line {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c7be5;
+      letter-spacing: 1px;
+    }
+    .print-header .sub-line {
+      font-size: 12px;
+      color: #555;
+      margin-top: 2px;
+    }
+    .print-header .date-line {
+      font-size: 10px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    /* Tabel */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+    }
+    thead th {
+      background: #2c7be5;
+      color: #fff;
+      padding: 5px 6px;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #e8e8e8;
+      vertical-align: middle;
+    }
+    tbody tr:nth-child(even) td {
+      background: #f4f8ff;
+    }
+    tbody tr:last-child td {
+      border-bottom: 2px solid #2c7be5;
+    }
+
+    /* Footer */
+    .print-footer {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: #888;
+      padding: 0 2px;
+    }
+
+    @media print {
+      @page {
+        size: landscape;
+        margin: 10mm 12mm;
+      }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-header">
+    <div class="logo-line">DATA BARANG POM</div>
+    <div class="sub-line">Manajemen Data Produk dan Harga</div>
+    <div class="date-line">Dicetak pada: ` + tgl + `</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:28px;">No</th>
+        <th>PT</th>
+        <th>Kode</th>
+        <th>Barang</th>
+        <th>Keterangan</th>
+        <th style="text-align:center;">Size</th>
+        <th style="text-align:center;">Satuan</th>
+        <th style="text-align:center;">Kelipatan</th>
+        <th style="text-align:right;">Retail</th>
+        <th style="text-align:right;">Grosir</th>
+        <th style="text-align:right;">Grosir 10</th>
+        <th style="text-align:right;">HET Jawa</th>
+        <th style="text-align:right;">Indo Barat</th>
+        <th style="text-align:right;">SP</th>
+        <th style="text-align:right;">Brg X</th>
+      </tr>
+    </thead>
+    <tbody>
+      ` + rows + `
+    </tbody>
+  </table>
+
+  <div class="print-footer">
+    <span>Total data: ` + ($('#datatable tbody tr').length) + ` barang</span>
+    <span>*Data Barang POM — Dokumen ini dicetak otomatis oleh sistem</span>
+  </div>
+
+</body>
+</html>`;
+
+    var win = window.open('', '_blank', 'width=1200,height=700');
+    win.document.write(printContent);
+    win.document.close();
+    win.focus();
+    setTimeout(function() {
+      win.print();
+    }, 400);
+  }
 </script>
+
 <script>
   $('.btn_delete').click(function(e) {
     const id = $(this).data('id');
@@ -372,6 +673,7 @@ label {
     })
   })
 </script>
+
 <script>
   $(document).ready(function() {
     $("#kode_add").on("blur", function() {
@@ -393,18 +695,11 @@ label {
       $.ajax({
         url: "<?php echo base_url('Barang/check_kode_exist'); ?>",
         method: "POST",
-        data: {
-          kode: kodeBarang,
-          id_perusahaan: idPerusahaan
-        },
+        data: { kode: kodeBarang, id_perusahaan: idPerusahaan },
         dataType: "json",
         success: function(response) {
           if (response.exist) {
-            Swal.fire(
-              'Kode Artikel sudah ada',
-              'Kode ini sudah digunakan pada perusahaan yang dipilih.',
-              'info'
-            );
+            Swal.fire('Kode Artikel sudah ada', 'Kode ini sudah digunakan pada perusahaan yang dipilih.', 'info');
             $('#kode_add').css({ 'border': '1px solid red' });
             $('#kode_add').val('');
           } else if (response.pernah_ada) {
@@ -474,15 +769,12 @@ label {
     $('#modal_import').on('hidden.bs.modal', function() {
       $('#file_input').val('');
       $('#import_perusahaan').val('');
-
       $('#preview_excel').addClass('d-none');
       $('#summary_import').addClass('d-none');
       $('#warning_import').addClass('d-none');
       $('#loading_import').addClass('d-none');
-
       $('#preview_body').html('');
       $('#sum_total, #sum_nochange, #sum_update, #sum_insert, #sum_error').text('0');
-
       $('#btn_import').prop('disabled', false).text('Import').attr('title', '');
     });
 
@@ -533,7 +825,6 @@ label {
         processData: false,
         contentType: false,
         dataType: 'json',
-
         success: function(res) {
           $('#loading_import').addClass('d-none');
 
@@ -587,8 +878,7 @@ label {
                 <td>${formatRupiah(item.excel.indo_barat || 0)}</td>
                 <td>${formatRupiah(item.excel.special_price || 0)}</td>
                 <td>${formatRupiah(item.excel.barang_x || 0)}</td>
-              </tr>
-            `;
+              </tr>`;
           });
 
           if (html === '') {
@@ -599,7 +889,6 @@ label {
 
           $('#preview_body').html(html);
           $('#preview_excel').removeClass('d-none');
-
           $('#sum_total').text(summary.total || 0);
           $('#sum_nochange').text(summary.no_change || 0);
           $('#sum_update').text(summary.update || 0);
@@ -608,26 +897,17 @@ label {
           $('#summary_import').removeClass('d-none');
 
           if (errCount > 0) {
-            $('#btn_import')
-              .prop('disabled', true)
-              .attr('title', 'Tidak bisa import, ada ' + errCount + ' data bermasalah');
+            $('#btn_import').prop('disabled', true).attr('title', 'Tidak bisa import, ada ' + errCount + ' data bermasalah');
           } else {
-            $('#btn_import')
-              .prop('disabled', false)
-              .attr('title', '');
+            $('#btn_import').prop('disabled', false).attr('title', '');
           }
 
           $('#warning_import').removeClass('d-none');
         },
-
         error: function(xhr) {
           $('#loading_import').addClass('d-none');
           console.log(xhr.responseText);
-          Swal.fire({
-            icon: 'error',
-            title: 'Server Error',
-            text: xhr.responseText || 'Gagal menghubungi server'
-          });
+          Swal.fire({ icon: 'error', title: 'Server Error', text: xhr.responseText || 'Gagal menghubungi server' });
         }
       });
     });
@@ -645,19 +925,15 @@ label {
         dataType: 'json',
         success: function(res) {
           $('#btn_import').prop('disabled', false).text('Import');
-
           if (!res.success) {
             Swal.fire('Error', res.error || 'Import gagal', 'error');
             return;
           }
-
           Swal.fire({
             icon: 'success',
             title: 'Import Berhasil',
             html: '<b>' + (res.data.inserted || 0) + '</b> data ditambahkan<br><b>' + (res.data.updated || 0) + '</b> data diupdate'
-          }).then(() => {
-            location.reload();
-          });
+          }).then(() => { location.reload(); });
         },
         error: function(xhr) {
           $('#btn_import').prop('disabled', false).text('Import');
@@ -673,9 +949,4 @@ label {
     });
 
   });
-</script>
-<script>
-  // Aktifkan semua tooltip di halaman
-  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 </script>

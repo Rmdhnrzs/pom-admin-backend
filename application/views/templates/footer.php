@@ -30,15 +30,20 @@
     </html>
     <script type="text/javascript">
         $(document).ready(function() {
-            $('#datatable').DataTable({
-                dom: 'Bfrtip',
-                scrollX: true,
-                buttons: [
-                    'copy', 'excel', 'pdf', 'csv', 'print'
-                ]
-            });
+            var isHalamanBarang = $('.btn-download-table').length > 0;
 
-            table.buttons().container().appendTo('#dt-buttons');
+            var dtOptions = {
+                dom: isHalamanBarang ? 'frtip' : 'Bfrtip',
+                scrollX: true,
+                buttons: isHalamanBarang ? [] : ['copy', 'excel', 'pdf', 'csv', 'print']
+            };
+
+            var table = $('#datatable').DataTable(dtOptions);
+
+            if (!isHalamanBarang) {
+                table.buttons().container().appendTo('#dt-buttons');
+            }
+
             $('#datatable_filter').appendTo('#dt-search');
         });
     </script>
