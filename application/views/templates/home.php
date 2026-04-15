@@ -48,7 +48,7 @@
 
 .bg-barang { background: #4e73df; }
 .bg-customer { background: #1cc88a; }
-.bg-stok { background: #3a3d33}
+.bg-stok { background: #369af7; }
 .bg-approve { background: #f6c23e; }
 .bg-done { background: #36b9cc; }
 </style>

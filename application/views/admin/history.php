@@ -101,6 +101,51 @@
     border-color: #2c7be5;
     box-shadow: 0 0 0 2px rgba(44,123,229,0.1);
   }
+
+  .dashboard-card {
+    border-radius: 12px;
+    border: none;
+    padding: 20px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    transition: 0.3s;
+  }
+
+  .dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+
+  .dashboard-card i {
+    font-size: 28px;
+    opacity: 0.9;
+  }
+
+  .dashboard-card .count {
+    font-size: 26px;
+    font-weight: bold;
+  }
+
+  .dashboard-card .label {
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  .dashboard-card::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+  }
+  
+  .bg-total-po { background: #369af7; }
+  .bg-approved-po { background: #5fc282; }
+  .bg-rejected-po { background: #c2473c; }
 </style>
 
 <div class="card shadow-sm custom-card">
@@ -116,7 +161,45 @@
       </div>
     </div>
   </div>
+  <div class="row mt-2">
+    
+    <div class="col-md-4 mb-3">
+      <div class="dashboard-card bg-total-po">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="label">Total PO selesai</div>
+            <div class="count"><?= number_format($total_po) ?></div>
+          </div>
+          <i class="fa fa-clipboard-list"></i>
+        </div>
+      </div>
+    </div>
 
+    <div class="col-md-4 mb-3">
+      <div class="dashboard-card bg-approved-po">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="label">Total PO diproses</div>
+            <div class="count"><?= number_format($total_approved_po) ?></div>
+          </div>
+          <i class="fa fa-check-circle"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <div class="dashboard-card bg-rejected-po">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="label">Total PO ditolak</div>
+            <div class="count"><?= number_format($total_rejected_po) ?></div>
+          </div>
+          <i class="fa fa-times-circle"></i>
+        </div>
+      </div>
+    </div>
+
+  </div>
   <div class="card-body">
 
     <form action="<?= base_url('Order/history') ?>" method="get">

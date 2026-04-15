@@ -91,6 +91,49 @@
     padding: 4px 10px;
     border-radius: 6px;
   }
+
+  .dashboard-card {
+    border-radius: 12px;
+    border: none;
+    padding: 20px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    transition: 0.3s;
+  }
+
+  .dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+
+  .dashboard-card i {
+    font-size: 28px;
+    opacity: 0.9;
+  }
+
+  .dashboard-card .count {
+    font-size: 26px;
+    font-weight: bold;
+  }
+
+  .dashboard-card .label {
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  .dashboard-card::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+  }
+
+  .bg-total-po { background: #f6c23e; }
 </style>
 <div class="card shadow-sm custom-card">
 
@@ -119,6 +162,21 @@
 
   </div>
 
+  <div class="row mt-2">
+    
+    <div class="col-md-4 mb-3">
+      <div class="dashboard-card bg-total-po">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="label">Total PO pending</div>
+            <div class="count"><?= number_format(0) ?></div>
+          </div>
+          <i class="fa fa-file-invoice"></i>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
   <div class="card-body">
 

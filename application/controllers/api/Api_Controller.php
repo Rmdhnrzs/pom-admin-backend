@@ -35,7 +35,7 @@ class Api_Controller extends CI_Controller {
     {
         $allowedOrigins = [
             $this->config->item('frontend_host'),
-            'http://localhost:5173'
+            'http://localhost'
         ];
 
         if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {

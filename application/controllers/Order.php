@@ -528,7 +528,6 @@ class Order extends CI_Controller
 		$tanggal_awal = date('Y-m-01', strtotime($bulan . '-01'));
 		$tanggal_akhir = date('Y-m-t', strtotime($bulan . '-01'));
 
-		// var_dump($status);
 		if ($status == "1") {
 			$data['detail']	= $this->db->query("SELECT tor.*, tp.nama as perusahaan, tc.nama_customer, tc.tipe_harga, tu.nama as sales from tb_order tor
 			join tb_customer tc on tor.id_customer = tc.id
@@ -557,10 +556,14 @@ class Order extends CI_Controller
 			order by tor.id desc
 			")->result();
 		}
+
 		$data['status'] = $status;
 		$data['tanggal_awal'] = $tanggal_awal;
 		$data['tanggal_akhir'] = $tanggal_akhir;
 		$data['bulan'] = $bulan;
+		$data['total_po'] = $this->db->query("select count(*) as total_po from tb_order where tanggal_dibuat between '$tanggal_awal' and '$tanggal_akhir' and status in (1, 2)")->row()->total_po;
+		$data['total_approved_po'] = $this->db->query("select count(*) as total_approved from tb_order where tanggal_dibuat between '$tanggal_awal' and '$tanggal_akhir' and status = 1")->row()->total_approved;
+		$data['total_rejected_po'] = $this->db->query("select count(*) as total_rejected from tb_order where tanggal_dibuat between '$tanggal_awal' and '$tanggal_akhir' and status = 2")->row()->total_rejected;
 
 		$this->load->view('templates/header.php', $data);
 		$this->load->view('templates/index.php', $data);
