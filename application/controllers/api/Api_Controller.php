@@ -39,6 +39,7 @@ class Api_Controller extends CI_Controller {
             'http://localhost/pom-web',
             'https://globalindo-group.com/pom_new',
             'https://globalindo-group.com/pom',
+            'https://globalindo-group.com/pom-web',
         ];
 
         if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {
