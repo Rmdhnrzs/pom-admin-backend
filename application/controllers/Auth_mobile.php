@@ -10,9 +10,9 @@ class Auth_mobile extends CI_Controller
 
     public function index()
     {       
-        // redirect($this->config->item('frontend_host'));
-        $this->output->set_content_type('text/html');
-        $this->output->set_output(file_get_contents(FCPATH . 'assets/frontend/index.html'));
+        redirect($this->config->item('frontend_host'));
+        // $this->output->set_content_type('text/html');
+        // $this->output->set_output(file_get_contents(FCPATH . 'assets/frontend/index.html'));
     }
 
     // public function login()

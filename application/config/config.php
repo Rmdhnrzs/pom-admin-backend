@@ -536,4 +536,4 @@ $config['proxy_ips'] = '';
 date_default_timezone_set('Asia/Jakarta');
 
 // React frontend host
-$config['frontend_host'] = "http://192.168.17.146:5173";
+$config['frontend_host'] = "https://globalindo-group.com/pom-mobile";
