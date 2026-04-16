@@ -35,7 +35,10 @@ class Api_Controller extends CI_Controller {
     {
         $allowedOrigins = [
             $this->config->item('frontend_host'),
-            'http://localhost'
+            'http://localhost',
+            'http://localhost/pom-web',
+            'https://globalindo-group.com/pom_new',
+            'https://globalindo-group.com/pom',
         ];
 
         if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {
