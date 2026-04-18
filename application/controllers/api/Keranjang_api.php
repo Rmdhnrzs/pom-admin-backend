@@ -150,29 +150,40 @@ class Keranjang_Api extends Api_Controller {
         }
 
         // -- File upload (optional) --
-        $filename = null;
-        if (!empty($_FILES['lampiran']['name'])) {
-            $upload_name = date('ymdHis') . '_' . uniqid();
-            $config = [
-                'upload_path'   => 'assets/file/',
-                'allowed_types' => 'jpeg|jpg|png|pdf|doc|docx',
-                'max_size'      => 5000,
-                'file_name'     => $upload_name,
-                'overwrite'     => true,
-            ];
-            $this->load->library('upload', $config);
-            $this->upload->initialize($config);
-
-            if (!$this->upload->do_upload('lampiran')) {
-                return $this->response([
-                    'status'  => false,
-                    'message' => 'Upload file gagal.',
-                    'error'   => strip_tags($this->upload->display_errors()),
-                ], 422);
-            }
-            $filename = $this->upload->data('file_name');
+        $this->load->library('upload');
+        $files = $_FILES;
+        $totalFilesUploaded = 0;
+        $filename = [];
+        if (isset($_FILES['lampiran'])) {
+            $totalFilesUploaded = count($_FILES['lampiran']['name']);
         }
+        for ($i=0; $i < $totalFilesUploaded; $i++) { 
+            $_FILES['lampiran']['name']     = $files['lampiran']['name'][$i];
+            $_FILES['lampiran']['type']     = $files['lampiran']['type'][$i];
+            $_FILES['lampiran']['tmp_name'] = $files['lampiran']['tmp_name'][$i];
+            $_FILES['lampiran']['error']    = $files['lampiran']['error'][$i];
+            $_FILES['lampiran']['size']     = $files['lampiran']['size'][$i];
 
+            if (!empty($files['lampiran']['name'][$i])) {
+                $upload_name = date('ymdHis') . '_' . uniqid();
+                $config = [
+                    'upload_path'   => 'assets/file/',
+                    'allowed_types' => 'jpeg|jpg|png|pdf|doc|docx',
+                    'max_size'      => 5000,
+                    'file_name'     => $upload_name,
+                    'overwrite'     => true,
+                ];
+                $this->upload->initialize($config);
+                if (!$this->upload->do_upload('lampiran')) {
+                    return $this->response([
+                        'status'  => false,
+                        'message' => 'Upload file gagal.',
+                        'error'   => strip_tags($this->upload->display_errors()),
+                    ], 422);
+                }
+                $filename[] = $this->upload->data('file_name');
+            }
+        }
         // -- DB Transaction --
         $this->db->trans_start();
 
@@ -186,7 +197,7 @@ class Keranjang_Api extends Api_Controller {
             'referensi'      => $referensi,
             'no_faktur'      => '-',
             'catatan'        => $catatan,
-            'file'           => $filename,
+            'file'           => implode(',', $filename),
             'status'         => 0,
         ]);
         $id_order = $this->db->insert_id();

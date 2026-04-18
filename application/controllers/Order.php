@@ -586,4 +586,19 @@ class Order extends CI_Controller
 		$this->load->view('templates/index.php', $data);
 		$this->load->view('templates/footer.php');
 	}
+	public function viewLampiran($file) 
+	{
+		$path = FCPATH .'assets/file/'.$file;
+		if (!file_exists($path)) {
+			show_404();
+		}
+		$mime = mime_content_type($path);
+
+		header('Content-Type: ' . $mime);
+		header('Content-Length: ' . filesize($path));
+		header('Content-Disposition: inline; filename="' . basename($path) . '"');
+
+		readfile($path);
+		exit;
+	}
 }

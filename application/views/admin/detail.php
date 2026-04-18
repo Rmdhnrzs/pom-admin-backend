@@ -285,9 +285,9 @@
     <a href="<?= base_url('Order/edit/' . $order->id) ?>" class="btn btn-warning btn-sm <?= ($order->status == 1) ? 'd-none' : '' ?>">
       <i class="fa fa-edit"></i> Edit
     </a>
-    <a href="<?= base_url('assets/file/' . $order->file) ?>" target="_blank" class="btn btn-info btn-sm <?= (is_null($order->file)) ? 'd-none' : '' ?>">
+    <button onclick="openFiles('<?php echo $order->file ?>')" class="btn btn-info btn-sm <?= (is_null($order->file)) ? 'd-none' : '' ?>">
       <i class="fa fa-download"></i> Lampiran
-    </a>
+    </button>
     <button onclick="printContent()" class="btn btn-primary btn-sm">
       <i class="fa fa-print"></i> Print
     </button>
@@ -564,6 +564,17 @@
 </div>
 
 <script>
+  function openFiles(files) {
+    var fileArray = files.split(',');
+    fileArray.forEach((file, i) => {
+      var trimedFile = file.trim();
+      if (file) {
+        var url = '<?= base_url('Order/viewLampiran/') ?>' + trimedFile;
+        window.open(url, '_blank');
+      }
+    });
+  }
+
   function printContent() {
     var printContents = document.querySelector('.areaPrint').innerHTML;
     var originalContents = document.body.innerHTML;

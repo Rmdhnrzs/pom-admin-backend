@@ -34,7 +34,14 @@ class Api_Controller extends CI_Controller {
     private function handleCors()
     {
         $allowedOrigins = [
-            'https://globalindo-group.com/pom-mobile'
+            $this->config->item('frontend_host'),
+            'http://192.168.17.164:5173',
+            'http://localhost', 
+            'http://localhost:5173',
+            'http://localhost/pom-mobile',
+            'https://globalindo-group.com/pom-mobile',
+            'https://globalindo-group.com/pom',
+            'https://globalindo-group.com/pom-web',
         ];
 
         if (isset($_SERVER['HTTP_ORIGIN']) && in_array($_SERVER['HTTP_ORIGIN'], $allowedOrigins)) {

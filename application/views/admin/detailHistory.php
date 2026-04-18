@@ -243,11 +243,81 @@
           <p class="navbar-subtitle">Informasi sales order dan detail item pesanan</p>
         </div>
       </div>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th style="width:5%">No</th>
+            <th style="width:13%">Kode</th>
+            <th>Artikel</th>
+            <th style="width:8%" class="text-center">Size</th>
+            <th style="width:7%" class="text-center">QTY</th>
+            <th style="width:8%" class="text-center">Satuan</th>
+            <th style="width:12%" class="text-right">Harga Satuan</th>
+            <th style="width:7%" class="text-center">Margin</th>
+            <th style="width:13%" class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $no = 0;
+          $subtotal = 0;
+          foreach ($detail as $d) :
+            $no++;
+          ?>
+            <tr>
+              <td><?= $no ?></td>
+              <td><?= $d->kode_artikel ?></td>
+              <td><?= $d->nama_artikel ?></td>
+              <td class="text-center">
+                <?= get_size($d->kode_artikel) ?>
+              </td>
+              <td class="text-center"><?= $d->qty ?></td>
+              <td class="text-center"><?= $d->satuan ?></td>
+              <td class="text-right">Rp <?= number_format($d->harga) ?></td>
+              <td class="text-center"><?= $d->diskon_barang ?></td>
+              <td class="text-right">Rp <?= number_format(hitung_diskon($d->harga, $d->diskon_barang) * $d->qty) ?></td>
+            </tr>
+          <?php
+            $subtotal += hitung_diskon($d->harga, $d->margin) * $d->qty;
+            $diskonValue = (float) str_replace('%', '', $order->diskon);
+            $diskon_p = $subtotal * $diskonValue / 100;
+            $grandtotal = $subtotal - $diskon_p;
+          endforeach ?>
+          <tr>
+            <td colspan="7" class="text-right"><strong>SubTotal :</strong></td>
+            <td></td>
+            <td class="text-right"><strong> Rp. <?= number_format($subtotal) ?></strong></td>
+          </tr>
+          <tr>
+            <td colspan="7" class="text-right"><strong>Diskon :</strong></td>
+            <td class="text-center"><?= $order->diskon ?>%</td>
+            <td class="text-right">Rp. <?= number_format($subtotal * $diskonValue / 100) ?></td>
+          </tr>
+          <tr>
+            <td colspan="7" class="text-right"><strong>GrandTotal :</strong></td>
+            <td></td>
+            <td class="text-right"><strong>Rp. <?= number_format($grandtotal) ?></strong></td>
+          </tr>
+          <tr>
+            <td colspan="9" class="text-right">
+              <?php
+              $badge_class = $grandtotal >= $order->minimum_order ? 'success' : 'danger';
+              $badge_text = $grandtotal >= $order->minimum_order ? 'SUDAH MEMENUHI MIN. PO' : 'BELUM MEMENUHI MIN. PO';
+              echo "<span class='badge badge-$badge_class'>$badge_text</span>";
+              ?>
+
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
   <!-- ACTION -->
   <div class="action-row">
+    <button onclick="openFiles('<?php echo $order->file ?>')" class="btn btn-info btn-sm <?= (is_null($order->file)) ? 'd-none' : '' ?>">
+      <i class="fa fa-download"></i> Lampiran
+    </button>
     <button onclick="exportSo('<?php echo $d->id_order; ?>')" data-toggle="modal" data-target=".exportSo" class="btn btn-info btn-sm">
       <i class="fa fa-download"></i> Export
     </button>
@@ -346,7 +416,7 @@
               </tr>
             <?php
               $subtotal += hitung_diskon($d->harga, $d->margin) * $d->qty;
-              $diskon_p = $subtotal * $order->diskon / 100;
+              $diskon_p = $subtotal * $diskonValue / 100;
               $grandtotal = $subtotal - $diskon_p;
             endforeach ?>
             <tr>
@@ -357,7 +427,7 @@
             <tr>
               <td colspan="7" class="text-right"><strong>Diskon :</strong></td>
               <td class="text-center"><?= $order->diskon ?>%</td>
-              <td class="text-right">Rp. <?= number_format($subtotal * $order->diskon / 100) ?></td>
+              <td class="text-right">Rp. <?= number_format($subtotal * $diskonValue / 100) ?></td>
             </tr>
             <tr>
               <td colspan="7" class="text-right"><strong>GrandTotal :</strong></td>
@@ -474,6 +544,17 @@
   }
 </script>
 <script>
+  function openFiles(files) {
+    var fileArray = files.split(',');
+    fileArray.forEach((file, i) => {
+      var trimedFile = file.trim();
+      if (file) {
+        var url = '<?= base_url('Order/viewLampiran/') ?>' + trimedFile;
+        window.open(url, '_blank');
+      }
+    });
+  }
+
   function exportSo(id) {
     $('#id_order').val(id);
   }
