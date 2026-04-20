@@ -35,7 +35,7 @@ class Api_Controller extends CI_Controller {
     {
         $allowedOrigins = [
             $this->config->item('frontend_host'),
-            'http://192.168.17.164:5173',
+            'http://192.168.17.80:5173',
             'http://localhost', 
             'http://localhost:5173',
             'http://localhost/pom-mobile',

@@ -140,7 +140,8 @@ class Keranjang_Api extends Api_Controller {
             $resolved_items[] = [
                 'id_barang' => $id_barang,
                 'qty'       => (int)$qty,
-                'harga'     => $this->sub_total($produk->harga, $diskon),  // always from DB
+                // 'harga'  => $this->sub_total($produk->harga, $diskon),  // always from DB
+                'harga'     => $produk->harga,
                 'diskon'    => $diskon,
             ];
         }

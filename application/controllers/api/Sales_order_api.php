@@ -156,7 +156,7 @@ class Sales_order_api extends Api_Controller {
                     if (strpos($item->diskon_barang, "+") !== false) {
                         $explode_diskon = explode('+', $item->diskon_barang);
                         foreach ($explode_diskon as $value) {
-                            $diskon = intval($value);
+                            $diskon = floatval($value);
                             $total -= $total * $diskon / 100;
                         }
                     } else {
