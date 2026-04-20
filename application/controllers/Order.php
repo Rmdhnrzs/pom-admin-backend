@@ -26,6 +26,7 @@ class Order extends CI_Controller
 		join tb_perusahaan tp on tp.id = tc.id_perusahaan
 		left join tb_user tu on tor.id_user = tu.id where tor.status = 0 order by tor.id desc
 		")->result();
+		$data['total_pending'] = $this->db->where('status', 0)->count_all_results('tb_order');
 
 		$this->load->view('templates/header.php', $data);
 		$this->load->view('templates/index.php', $data);

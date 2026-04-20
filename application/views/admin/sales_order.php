@@ -168,8 +168,8 @@
       <div class="dashboard-card bg-total-po">
         <div class="d-flex justify-content-between">
           <div>
-            <div class="label">Total PO pending</div>
-            <div class="count"><?= number_format(0) ?></div>
+            <div class="label">Total PO/SO pending</div>
+            <div class="count"><?= number_format($total_pending) ?></div>
           </div>
           <i class="fa fa-file-invoice"></i>
         </div>
