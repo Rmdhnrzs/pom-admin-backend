@@ -266,7 +266,12 @@
           ?>
             <tr>
               <td><?= $no ?></td>
-              <td><?= $d->kode_artikel ?></td>
+              <td>  
+                <?= $d->kode_artikel ?>
+                <?php if($d->sm_status): ?>
+                    <span class="badge badge-pill badge-warning px-3">Slow Moving</span>
+                  <?php endif; ?>
+              </td>
               <td><?= $d->nama_artikel ?></td>
               <td class="text-center">
                 <?= get_size($d->kode_artikel) ?>
@@ -442,7 +447,12 @@
             ?>
               <tr>
                 <td><?= $no ?></td>
-                <td><?= $d->kode_artikel ?></td>
+                <td>
+                  <?= $d->kode_artikel ?>
+                  <?php if($d->sm_status): ?>
+                    <span class="badge badge-pill badge-warning px-3">Slow Moving</span>
+                  <?php endif; ?>
+                </td>
                 <td><?= $d->nama_artikel ?></td>
                 <td class="text-center">
                   <?= get_size($d->kode_artikel) ?>

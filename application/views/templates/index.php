@@ -118,6 +118,11 @@
                 <li class="nav-item <?= ($title == 'Data User') ? 'active' : '' ?>">
                   <a class="nav-link" href="<?= base_url('User') ?>"><i class="fas fa-user"></i> User</a>
                 </li>
+                <li class="nav-item <?= ($title == 'DBSM') ? 'active' : '' ?>">
+                  <a class="nav-link" href="<?= base_url('Barang_sm') ?>">
+                    <i class="fas fa-spinner"></i> Barang Slow Moving
+                  </a>
+                </li>
               <?php endif; ?>
               <li class="nav-item <?= ($title == 'Gudang') ? 'active' : '' ?>">
                 <a class="nav-link" href="<?= base_url('Gudang') ?>">

@@ -31,7 +31,20 @@ class Sales_order_api extends Api_Controller {
 
         $tipe = $this->getPriceType($tipe_customer, $tipe_po);
 
-        $produk = $this->db->query("SELECT id, TRIM(kode_artikel) as kode_artikel, nama_artikel, satuan, $tipe as harga, size, stok, kelipatan from tb_barang where $tipe > 0 and deleted_at is null and id_perusahaan = '$perusahaan_id' order by kode_artikel")->result();
+        $produk = $this->db->query("SELECT 
+            tb.id, 
+            TRIM(kode_artikel) as kode_artikel, 
+            tb.nama_artikel, 
+            satuan, 
+            $tipe as harga, 
+            tb.size, 
+            tb.stok, 
+            tb.kelipatan, 
+            IF(tbs.id is not null, true, false) as sm_status
+        from tb_barang as tb
+        left join tb_barang_sm as tbs on tbs.id_barang = tb.id and tbs.id_customer = '$id_customer'
+        where $tipe > 0 and deleted_at is null and id_perusahaan = '$perusahaan_id' 
+        order by kode_artikel")->result();
 
         return $this->response([
             'status' => true,
@@ -127,7 +140,19 @@ class Sales_order_api extends Api_Controller {
             ], 400);
         }
 
-        $data_order = $this->db->query("SELECT tb_customer.nama_customer, tb_order.tanggal_dibuat, tb_order.alasan, tb_order.jenis, tb_order.no_faktur, tb_order.referensi, tb_order.diskon, tb_order.catatan, tb_order.status from tb_order join tb_customer on tb_order.id_customer = tb_customer.id where tb_order.id = '$id' order by tb_order.id desc")->row();
+        $data_order = $this->db->query("SELECT 
+        tb_customer.id as id_customer,
+        tb_customer.nama_customer, 
+        tb_order.tanggal_dibuat, 
+        tb_order.alasan, 
+        tb_order.jenis, 
+        tb_order.no_faktur, 
+        tb_order.referensi, 
+        tb_order.diskon, 
+        tb_order.catatan, 
+        tb_order.status
+        from tb_order join tb_customer on tb_order.id_customer = tb_customer.id where tb_order.id = '$id'
+        order by tb_order.id desc")->row();
 
         if (!$data_order) {
             return $this->response([
@@ -136,7 +161,19 @@ class Sales_order_api extends Api_Controller {
             ], 404);
         }
 
-        $data_order_detail = $this->db->query("SELECT tb_barang.kode_artikel, tb_barang.nama_artikel, tb_barang.satuan, tb_order_detail.qty, tb_order_detail.harga, tb_order_detail.diskon_barang from tb_order join tb_order_detail on tb_order_detail.id_order = tb_order.id join tb_barang on tb_barang.id = tb_order_detail.id_barang where tb_order.id = '$id' order by tb_order.tanggal_dibuat")->result();
+        $id_customer = $data_order->id_customer;
+        $data_order_detail = $this->db->query("SELECT 
+            tb_barang.kode_artikel, 
+            tb_barang.nama_artikel, 
+            tb_barang.satuan, 
+            tb_order_detail.qty, 
+            tb_order_detail.harga, 
+            tb_order_detail.diskon_barang,
+            IF(tbs.id is not null, true, false) as sm_status
+        from tb_order join tb_order_detail on tb_order_detail.id_order = tb_order.id 
+        join tb_barang on tb_barang.id = tb_order_detail.id_barang 
+        left join tb_barang_sm as tbs on tbs.id_barang = tb_barang.id and tbs.id_customer = '$id_customer'
+        where tb_order.id = '$id' order by tb_order.tanggal_dibuat")->result();
 
         return $this->response([
             'status' => true,

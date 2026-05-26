@@ -447,7 +447,12 @@
             ?>
               <tr>
                 <td><?= $no ?></td>
-                <td><span class="text-code"><?= $d->kode_artikel ?></span></td>
+                <td>
+                  <span class="text-code"><?= $d->kode_artikel ?></span>
+                  <?php if($d->sm_status): ?>
+                    <span class="badge badge-pill badge-warning px-3">Slow Moving</span>
+                  <?php endif; ?>
+                </td>
                 <td><?= $d->nama_artikel ?></td>
                 <td class="text-center"><?= $d->size ?></td>
                 <td class="text-center"><?= $d->qty ?></td>

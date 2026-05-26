@@ -131,14 +131,29 @@ class Order extends CI_Controller
 	{
 		$data['view'] = 'admin/detail';
 		$data['title'] = 'Sales Order';
-		$data['order'] = $this->db->query("SELECT td.*, tp.nama as nama_perusahaan, tp.id as id_perusahaan, tc.nama_customer, tc.termasuk_pajak, tc.alamat,tc.tipe_harga, tu.nama as sales, tc.minimum_order from tb_order td
+		$data['order'] = $this->db->query("SELECT td.*, tp.nama as nama_perusahaan, tp.id as id_perusahaan, tc.id as id_customer, tc.nama_customer, tc.termasuk_pajak, tc.alamat,tc.tipe_harga, tu.nama as sales, tc.minimum_order from tb_order td
 		join tb_customer tc on td.id_customer = tc.id
 		join tb_perusahaan tp on tp.id = tc.id_perusahaan
 		left join tb_user tu on td.id_user = tu.id where td.id ='$id'")->row();
-		$data['detail']	= $this->db->query("SELECT tod.*, tb.keterangan, tb.kode_artikel,tb.nama_artikel, tb.stok, tb.satuan, tb.size, tc.margin, td.diskon, td.status as order_status from tb_order_detail tod
+		$id_customer = $data['order']->id_customer;
+		$data['detail']	= $this->db->query("SELECT 
+			tod.*, 
+			tb.keterangan, 
+			tb.kode_artikel,
+			tb.nama_artikel, 
+			tb.stok, 
+			tb.satuan, 
+			tb.size, 
+			tc.margin, 
+			td.diskon, 
+			td.status as order_status,
+			IF(tbs.id is not null, true, false) as sm_status
+		from tb_order_detail tod
 		join tb_order td on tod.id_order = td.id
 		join tb_barang tb on tod.id_barang = tb.id
-		join tb_customer tc on td.id_customer = tc.id where tod.id_order = '$id' order by tod.id
+		join tb_customer tc on td.id_customer = tc.id 
+		left join tb_barang_sm tbs on tbs.id_barang = tb.id and tbs.id_customer = $id_customer
+		where tod.id_order = '$id' order by tod.id
 		")->result();
 		$this->load->view('templates/header.php', $data);
 		$this->load->view('templates/index.php', $data);
@@ -152,9 +167,9 @@ class Order extends CI_Controller
 		// Mengambil data artikel dari tabel tb_stok berdasarkan id_toko
 		// Ganti dengan kode Anda untuk mengambil data dari database
 		$artikel = $this->db->query("SELECT tpd.*, tp.kode_artikel, tp.nama_artikel,tp.satuan, too.tanggal_dibuat as tgl_po from tb_order_detail tpd
-       join tb_barang tp on tpd.id_barang = tp.id
-	   join tb_order too on tpd.id_order = too.id
-       where tpd.id_order = '$detail' order by tp.kode_artikel asc  ");
+		join tb_barang tp on tpd.id_barang = tp.id
+		join tb_order too on tpd.id_order = too.id
+		where tpd.id_order = '$detail' order by tp.kode_artikel asc  ");
 
 		if ($artikel->num_rows() > 0) {
 			$result = $artikel->result();
@@ -575,13 +590,25 @@ class Order extends CI_Controller
 	{
 		$data['view'] = 'admin/detailHistory';
 		$data['title'] = 'history Order';
-		$data['order'] = $this->db->query("SELECT td.*, tc.nama_customer, tc.alamat,tc.tipe_harga, tu.nama as sales, tc.minimum_order from tb_order td
+		$data['order'] = $this->db->query("SELECT td.*, tc.id as id_customer, tc.nama_customer, tc.alamat,tc.tipe_harga, tu.nama as sales, tc.minimum_order from tb_order td
 		join tb_customer tc on td.id_customer = tc.id
 		left join tb_user tu on tc.id_sales = tu.id where td.id ='$id'")->row();
-		$data['detail']	= $this->db->query("SELECT tod.*, tb.kode_artikel,tb.nama_artikel,tb.satuan,tc.margin, td.diskon from tb_order_detail tod
+
+		$id_customer = $data['order']->id_customer;
+		$data['detail']	= $this->db->query("SELECT 
+			tod.*, 
+			tb.kode_artikel,
+			tb.nama_artikel,
+			tb.satuan,
+			tc.margin, 
+			td.diskon, 
+			IF(tbs.id is not null, true, false) as sm_status 
+		from tb_order_detail tod
 		join tb_order td on tod.id_order = td.id
 		join tb_barang tb on tod.id_barang = tb.id
-		join tb_customer tc on td.id_customer = tc.id where tod.id_order = '$id' order by tb.kode_artikel asc
+		join tb_customer tc on td.id_customer = tc.id 
+		left join tb_barang_sm tbs on tbs.id_barang = tb.id and tbs.id_customer = $id_customer
+		where tod.id_order = '$id' order by tb.kode_artikel asc
 		")->result();
 		$this->load->view('templates/header.php', $data);
 		$this->load->view('templates/index.php', $data);
