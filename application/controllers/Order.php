@@ -556,7 +556,7 @@ class Order extends CI_Controller
 		} elseif ($status == "2") {
 			$data['detail']	= $this->db->query("SELECT tor.*, tp.nama as perusahaan, tc.nama_customer, tc.tipe_harga, tu.nama as sales from tb_order tor
 			join tb_customer tc on tor.id_customer = tc.id
-			left join tb_user tu on tc.id_sales = tu.id
+			left join tb_user tu on tor.id_user = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status = 2
 			and date(tor.tanggal_dibuat) between '$tanggal_awal' and '$tanggal_akhir'
@@ -565,7 +565,7 @@ class Order extends CI_Controller
 		} else {
 			$data['detail']	= $this->db->query("SELECT tor.*, tp.nama as perusahaan, tc.nama_customer, tc.tipe_harga, tu.nama as sales from tb_order tor
 			join tb_customer tc on tor.id_customer = tc.id
-			left join tb_user tu on tc.id_sales = tu.id
+			left join tb_user tu on tor.id_user = tu.id
 			join tb_perusahaan tp on tp.id = tor.id_perusahaan
 			where tor.status in (1, 2)
 			and date(tor.tanggal_dibuat) between '$tanggal_awal' and '$tanggal_akhir'

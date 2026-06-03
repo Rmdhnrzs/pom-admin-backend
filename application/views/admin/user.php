@@ -86,6 +86,27 @@
   .modal-footer {
     border-top: none;
   }
+
+  .role-admin {
+    padding: 6px;
+    border-radius: 6px;
+    background-color: #FEE2E2;
+    color: #991B1B;
+  }
+
+  .role-sales {
+    padding: 6px;
+    border-radius: 6px;
+    background-color: #DBEAFE;
+    color: #1E40AF;
+  }
+
+  .role-accounting {
+    padding: 6px;
+    border-radius: 6px;
+    background-color: #DCFCE7;
+    color: #166534;
+  }
 </style>
 <div class="card shadow-sm custom-card">
 
@@ -138,9 +159,11 @@
             <td class="text-center">
               <?php
               if ($k->id_role == 1) {
-                echo "<span class='badge badge-warning'>Administrator</span>";
+                echo "<span class='role-admin'>Administrator</span>";
               } else if ($k->id_role == 2) {
-                echo "<span class='badge badge-danger'>Sales</span>";
+                echo "<span class='role-sales'>Sales</span>";
+              } else if ($k->id_role == 3) {
+                echo "<span class='role-accounting'>Akunting</span>";
               } else {
                 echo "<span class='badge badge-secondary'>Tidak ada</span>";
               }
@@ -213,6 +236,7 @@
               <option value="">- Pilih Role -</option>
               <option value="1">Administrator</option>
               <option value="2">Sales</option>
+              <option value="3">Akunting</option>
             </select>
           </div>
         </div>
@@ -254,6 +278,7 @@
               <option value="">- Pilih Role -</option>
               <option value="1">Administrator</option>
               <option value="2">Sales</option>
+              <option value="3">Akunting</option>
             </select>
           </div>
         </div>
