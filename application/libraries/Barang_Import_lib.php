@@ -1,18 +1,31 @@
 <?php
-defined ('BASEPATH') OR exit('No direct access script allowed');
+defined('BASEPATH') OR exit('No direct script access allowed');
+
 require_once FCPATH . 'vendor/autoload.php';
+
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-class Barang_Import_lib {
+class Barang_Import_lib
+{
     private $CI;
-    public function __construct() {
+
+    private $priceFields = [
+        'retail',
+        'grosir',
+        'grosir_10',
+        'het_jawa',
+        'indo_barat',
+        'special_price',
+        'barang_x',
+    ];
+
+    public function __construct()
+    {
         $this->CI =& get_instance();
     }
 
     public function preview(array $file, string $id_perusahaan): array
     {
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
         try {
             $this->validateUpload($file);
 
@@ -22,7 +35,9 @@ class Barang_Import_lib {
 
             $result = [];
 
-            foreach ($excel as $kode => $row) {
+            foreach ($excel as $row) {
+                $kode = $row['kode'];
+
                 if (!empty($row['duplicate'])) {
                     $result[] = [
                         'kode'    => $kode,
@@ -40,8 +55,16 @@ class Barang_Import_lib {
                 if (isset($db[$kode]) && empty($db[$kode]['deleted_at'])) {
                     $dbRow        = $db[$kode];
                     $changeFields = $this->detectChanges($row, $dbRow);
-                    $status       = !empty($errors) ? 'error' : (!empty($changeFields) ? 'update' : 'no_change');
-                    $result[]     = [
+
+                    if (!empty($errors)) {
+                        $status = 'error';
+                    } elseif (!empty($changeFields)) {
+                        $status = 'update';
+                    } else {
+                        $status = 'no_change';
+                    }
+
+                    $result[] = [
                         'kode'    => $kode,
                         'status'  => $status,
                         'errors'  => $errors,
@@ -61,14 +84,7 @@ class Barang_Import_lib {
                 }
             }
 
-            $summary = [
-                'total'     => count($result),
-                'insert'    => count(array_filter($result, fn($r) => $r['status'] === 'insert')),
-                'update'    => count(array_filter($result, fn($r) => $r['status'] === 'update')),
-                'no_change' => count(array_filter($result, fn($r) => $r['status'] === 'no_change')),
-                'error'     => count(array_filter($result, fn($r) => $r['status'] === 'error')),
-                'duplicate' => count(array_filter($result, fn($r) => $r['status'] === 'duplicate')),
-            ];
+            $summary = $this->buildSummary($result);
 
             return [
                 'success' => true,
@@ -95,19 +111,22 @@ class Barang_Import_lib {
             $dbResult = $this->getBarangDB($id_perusahaan);
             $db       = $dbResult['items'];
 
-            $this->CI->db->trans_start();
+            $this->CI->db->trans_begin();
 
             $insert  = [];
             $update  = 0;
             $skipped = 0;
 
-            foreach ($excel as $kode => $row) {
+            foreach ($excel as $row) {
+                $kode = $row['kode'];
+
                 if (!empty($row['duplicate'])) {
                     $skipped++;
                     continue;
                 }
 
-                if (!empty($this->validateRow($row))) {
+                $errors = $this->validateRow($row);
+                if (!empty($errors)) {
                     $skipped++;
                     continue;
                 }
@@ -116,16 +135,22 @@ class Barang_Import_lib {
 
                 if (isset($db[$kode])) {
                     if (!empty($db[$kode]['deleted_at'])) {
-                        $data['deleted_at'] = NULL;
-                        $this->CI->db->update('tb_barang', $data, ['id' => $db[$kode]['id']]);
+                        $data['deleted_at'] = null;
+
+                        $this->CI->db
+                            ->where('id', $db[$kode]['id'])
+                            ->update('tb_barang', $data);
+
                         $update++;
                     } else {
                         if ($this->doUpdate($db[$kode], $data)) {
                             $update++;
+                        } else {
+                            $skipped++;
                         }
                     }
                 } else {
-                    $data['deleted_at'] = NULL;
+                    $data['deleted_at'] = null;
                     $insert[] = $data;
                 }
             }
@@ -134,11 +159,16 @@ class Barang_Import_lib {
                 $this->CI->db->insert_batch('tb_barang', $insert);
             }
 
-            $this->CI->db->trans_complete();
+            if ($this->CI->db->trans_status() === false) {
+                $this->CI->db->trans_rollback();
 
-            if (!$this->CI->db->trans_status()) {
-                return ['success' => false, 'error' => 'Transaksi database gagal'];
+                return [
+                    'success' => false,
+                    'error'   => 'Transaksi database gagal',
+                ];
             }
+
+            $this->CI->db->trans_commit();
 
             return [
                 'success' => true,
@@ -149,7 +179,14 @@ class Barang_Import_lib {
                 ],
             ];
         } catch (\Throwable $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
+            if ($this->CI->db->trans_status() === false) {
+                $this->CI->db->trans_rollback();
+            }
+
+            return [
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ];
         }
     }
 
@@ -164,9 +201,11 @@ class Barang_Import_lib {
             $reader->setDelimiter($delimiter);
         }
 
-        $sheet = $reader->load($filePath)->getActiveSheet()->toArray();
+        $spreadsheet = $reader->load($filePath);
+        $sheet       = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
 
         $headerRowIndex = null;
+
         foreach ($sheet as $i => $row) {
             if (strtoupper(trim($row[0] ?? '')) === 'NO') {
                 $headerRowIndex = $i;
@@ -181,71 +220,91 @@ class Barang_Import_lib {
         $header = $sheet[$headerRowIndex];
         $this->validateHeader($header);
 
-        $result = [];
+        $result      = [];
+        $kodeCounter = [];
 
         foreach ($sheet as $i => $row) {
-            if ($i <= $headerRowIndex) continue;
-            if (!isset($row[1]) || trim($row[1]) === '') continue;
+            if ($i <= $headerRowIndex) {
+                continue;
+            }
+
+            if (!isset($row[1]) || trim((string) $row[1]) === '') {
+                continue;
+            }
 
             $kode = $this->normalize($row[1]);
             $kode = trim(preg_replace('/\s+BARANG\s*X\s*$/i', '', $kode));
 
-            if (isset($result[$kode])) {
-                $result[$kode]['duplicate'] = true;
-                continue;
-            }
-
-            $result[$kode] = [
+            $item = [
+                'row_number'     => $i + 1,
                 'kode'           => $kode,
-                'nama'           => trim($row[2] ?? ''),
-                'keterangan'     => trim($row[3] ?? ''),
-                'size'           => trim($row[4] ?? ''),
-                'satuan'         => trim($row[5] ?? ''),
-                'kelipatan'      => max(1, (int)($row[6] ?? 1)),
+                'nama'           => trim((string) ($row[2] ?? '')),
+                'keterangan'     => trim((string) ($row[3] ?? '')),
+                'size'           => trim((string) ($row[4] ?? '')),
+                'satuan'         => trim((string) ($row[5] ?? '')),
+                'kelipatan'      => (int) ($row[6] ?? 0),
                 'kategori_label' => $this->normalizeKategori($row[7] ?? ''),
 
-                'retail'        => $this->parseHarga($row[8]  ?? 0),
-                'grosir'        => $this->parseHarga($row[9]  ?? 0),
-                'grosir_10'     => $this->parseHarga($row[10] ?? 0),
-                'het_jawa'      => $this->parseHarga($row[11] ?? 0),
-                'indo_barat'    => $this->parseHarga($row[12] ?? 0),
-                'special_price' => $this->parseHarga($row[13] ?? 0),
-                'barang_x'      => $this->parseHarga($row[14] ?? 0),
+                'retail'         => $this->parseHarga($row[8]  ?? 0),
+                'grosir'         => $this->parseHarga($row[9]  ?? 0),
+                'grosir_10'      => $this->parseHarga($row[10] ?? 0),
+                'het_jawa'       => $this->parseHarga($row[11] ?? 0),
+                'indo_barat'     => $this->parseHarga($row[12] ?? 0),
+                'special_price'  => $this->parseHarga($row[13] ?? 0),
+                'barang_x'       => $this->parseHarga($row[14] ?? 0),
 
-                'duplicate' => false,
+                'duplicate'      => false,
             ];
+
+            $result[] = $item;
+
+            if (!isset($kodeCounter[$kode])) {
+                $kodeCounter[$kode] = 0;
+            }
+
+            $kodeCounter[$kode]++;
         }
+
+        foreach ($result as &$item) {
+            if (($kodeCounter[$item['kode']] ?? 0) > 1) {
+                $item['duplicate'] = true;
+            }
+        }
+        unset($item);
 
         return $result;
     }
 
     private function parseHarga($val): ?float
     {
-        if ($val === null || $val === '') return null;
+        if ($val === null || $val === '') {
+            return null;
+        }
 
         if (is_string($val)) {
-            $val = str_replace(['Rp', ' ', "\xA0"], '', $val);
+            $val = str_replace(['Rp', ' ', "\xc2\xa0"], '', $val);
             $val = trim($val);
         }
 
-        if ($val === '' || $val === null) return null;
+        if ($val === '' || $val === null) {
+            return null;
+        }
 
-        // Format: 1.500,75
-        if (preg_match('/^\d{1,3}(\.\d{3})+,\d+$/', $val)) {
+        if (preg_match('/^\d{1,3}(\.\d{3})+,\d+$/', (string) $val)) {
             return (float) str_replace(['.', ','], ['', '.'], $val);
         }
 
-        // Format: 10.000 atau 1.000.000
-        if (preg_match('/^\d{1,3}(\.\d{3})+$/', $val)) {
+        if (preg_match('/^\d{1,3}(\.\d{3})+$/', (string) $val)) {
             return (float) str_replace('.', '', $val);
         }
 
-        // Format: 10,5
-        if (preg_match('/^\d+,\d+$/', $val)) {
+        if (preg_match('/^\d+,\d+$/', (string) $val)) {
             return (float) str_replace(',', '.', $val);
         }
 
-        if (is_numeric($val)) return (float) $val;
+        if (is_numeric($val)) {
+            return (float) $val;
+        }
 
         return null;
     }
@@ -254,23 +313,38 @@ class Barang_Import_lib {
     {
         $val = preg_replace('/[[:^print:]]/', '', (string) $val);
         $val = preg_replace('/\s+/', ' ', $val);
+
         return strtoupper(trim($val));
     }
 
     private function validateHeader(array $header): void
     {
         $expected = [
-            'No', 'Kode', 'Barang', 'Keterangan', 'Size', 'Satuan', 'Kelipatan',
-            'Kategori', 'Retail', 'Grosir', 'Grosir_10', 'HET_Jawa', 'Indo_Barat', 'SP', 'Brg X',
+            'No',
+            'Kode',
+            'Barang',
+            'Keterangan',
+            'Size',
+            'Satuan',
+            'Kelipatan',
+            'Kategori',
+            'Retail',
+            'Grosir',
+            'Grosir_10',
+            'HET_Jawa',
+            'Indo_Barat',
+            'SP',
+            'Brg X',
         ];
 
         foreach ($expected as $i => $col) {
-            $actual = trim($header[$i] ?? '');
+            $actual = trim((string) ($header[$i] ?? ''));
+
             if (strtoupper($actual) !== strtoupper($col)) {
                 throw new \Exception(
-                    "Format file tidak sesuai template. " .
-                    "Kolom ke-" . ($i + 1) . " harus \"$col\", ditemukan \"$actual\". " .
-                    "Silahkan unduh template kembali."
+                    'Format file tidak sesuai template. ' .
+                    'Kolom ke-' . ($i + 1) . ' harus "' . $col . '", ditemukan "' . $actual . '". ' .
+                    'Silahkan unduh template kembali.'
                 );
             }
         }
@@ -299,48 +373,75 @@ class Barang_Import_lib {
     {
         $errors = [];
 
-        $validSize     = ['S','M','L','XL','XXL','XXXL','XXXXL','S/M','L/XL','M/L','XL/XXL','ALL SIZE'];
-        $validSatuan   = ['Pck','Pcs','Box','Psg','BOX'];
+        $validSize = [
+            'S',
+            'M',
+            'L',
+            'XL',
+            'XXL',
+            'XXXL',
+            'XXXXL',
+            'S/M',
+            'L/XL',
+            'M/L',
+            'XL/XXL',
+            'ALL SIZE',
+        ];
+
+        $validSatuan = ['PCK', 'PCS', 'BOX', 'PSG'];
         $validKategori = ['NORMAL', 'SPECIAL PRICE', 'BARANG X'];
 
-        if (empty($row['kode'])) $errors[] = 'Kode kosong';
-        if (empty($row['nama'])) $errors[] = 'Nama kosong';
+        if (empty($row['kode'])) {
+            $errors[] = 'Kode kosong';
+        }
 
-        if (empty($row['size'])) {
+        if (empty($row['nama'])) {
+            $errors[] = 'Nama kosong';
+        }
+
+        $size = strtoupper(trim((string) ($row['size'] ?? '')));
+        if ($size === '') {
             $errors[] = 'Size kosong';
-        } elseif (!in_array(strtoupper(trim($row['size'])), array_map('strtoupper', $validSize))) {
+        } elseif (!in_array($size, $validSize, true)) {
             $errors[] = 'Size tidak valid (' . implode('/', $validSize) . ')';
         }
 
-        if (empty($row['satuan'])) {
+        $satuan = strtoupper(trim((string) ($row['satuan'] ?? '')));
+        if ($satuan === '') {
             $errors[] = 'Satuan kosong';
-        } elseif (!in_array($row['satuan'], $validSatuan)) {
-            $errors[] = 'Satuan tidak valid (' . implode('/', $validSatuan) . ')';
+        } elseif (!in_array($satuan, $validSatuan, true)) {
+            $errors[] = 'Satuan tidak valid (Pck/Pcs/Box/Psg)';
         }
 
-        $kelipatan = (int)($row['kelipatan'] ?? 0);
+        $kelipatan = (int) ($row['kelipatan'] ?? 0);
         if ($kelipatan < 1 || $kelipatan > 1000) {
-            $errors[] = 'Kelipatan harus antara 1 – 1000';
+            $errors[] = 'Kelipatan harus antara 1 - 1000';
         }
 
-        $kategoriLabel = $row['kategori_label'] ?? '';
+        $kategoriLabel = strtoupper(trim((string) ($row['kategori_label'] ?? '')));
 
-        if (empty($kategoriLabel)) {
+        if ($kategoriLabel === '') {
             $errors[] = 'Kategori kosong';
         } elseif (!in_array($kategoriLabel, $validKategori, true)) {
             $errors[] = 'Kategori tidak valid (Normal / Special Price / Barang X)';
         }
 
-        $retail        = (float)($row['retail']        ?? 0);
-        $grosir        = (float)($row['grosir']        ?? 0);
-        $grosir_10     = (float)($row['grosir_10']     ?? 0);
-        $het_jawa      = (float)($row['het_jawa']      ?? 0);
-        $indo_barat    = (float)($row['indo_barat']    ?? 0);
-        $special_price = (float)($row['special_price'] ?? 0);
-        $barang_x      = (float)($row['barang_x']      ?? 0);
+        $retail        = (float) ($row['retail'] ?? 0);
+        $grosir        = (float) ($row['grosir'] ?? 0);
+        $grosir_10     = (float) ($row['grosir_10'] ?? 0);
+        $het_jawa      = (float) ($row['het_jawa'] ?? 0);
+        $indo_barat    = (float) ($row['indo_barat'] ?? 0);
+        $special_price = (float) ($row['special_price'] ?? 0);
+        $barang_x      = (float) ($row['barang_x'] ?? 0);
 
         if ($kategoriLabel === 'BARANG X') {
-            $adaHargaLain = $retail > 0 || $grosir > 0 || $grosir_10 > 0 || $het_jawa > 0 || $indo_barat > 0 || $special_price > 0;
+            $adaHargaLain =
+                $retail > 0 ||
+                $grosir > 0 ||
+                $grosir_10 > 0 ||
+                $het_jawa > 0 ||
+                $indo_barat > 0 ||
+                $special_price > 0;
 
             if ($barang_x <= 0) {
                 $errors[] = 'Kategori Barang X wajib mengisi harga Barang X';
@@ -351,7 +452,7 @@ class Barang_Import_lib {
             }
         } else {
             if ($barang_x > 0) {
-                $errors[] = 'Kategori Normal/Special Price tidak boleh isi kolom barang x';
+                $errors[] = 'Kategori Normal/Special Price tidak boleh isi kolom Barang X';
             }
         }
 
@@ -364,16 +465,29 @@ class Barang_Import_lib {
 
     private function validateUpload(array $file): void
     {
+        if (empty($file)) {
+            throw new \Exception('File tidak dikirim');
+        }
+
+        if (isset($file['error']) && $file['error'] !== UPLOAD_ERR_OK) {
+            throw new \Exception('Upload file gagal. Kode error: ' . $file['error']);
+        }
+
         if (empty($file['tmp_name'])) {
             throw new \Exception('File kosong');
         }
 
-        if ($file['size'] > 5 * 1024 * 1024) {
+        if (!file_exists($file['tmp_name'])) {
+            throw new \Exception('File upload tidak ditemukan di server');
+        }
+
+        if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
             throw new \Exception('Ukuran file maksimal 5MB');
         }
 
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, ['xlsx', 'xls', 'csv'])) {
+        $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+
+        if (!in_array($ext, ['xlsx', 'xls', 'csv'], true)) {
             throw new \Exception('Format file tidak didukung. Gunakan xlsx, xls, atau csv');
         }
     }
@@ -384,7 +498,9 @@ class Barang_Import_lib {
             throw new \Exception('ID Perusahaan tidak dikirim');
         }
 
-        $perusahaan = $this->CI->db->get_where('tb_perusahaan', ['id' => $id_perusahaan])->row();
+        $perusahaan = $this->CI->db
+            ->get_where('tb_perusahaan', ['id' => $id_perusahaan])
+            ->row();
 
         if (!$perusahaan) {
             throw new \Exception('Perusahaan tidak ditemukan');
@@ -399,12 +515,12 @@ class Barang_Import_lib {
         foreach ($rows as $r) {
             $kode = $this->normalize($r->kode_artikel);
 
-            if ((int)$r->kategori === 1) {
-                $kategori_label = 'Barang X';
-            } elseif ((float)$r->special_price > 0) {
-                $kategori_label = 'Special Price';
+            if ((int) $r->kategori === 1) {
+                $kategoriLabel = 'BARANG X';
+            } elseif ((float) $r->special_price > 0) {
+                $kategoriLabel = 'SPECIAL PRICE';
             } else {
-                $kategori_label = 'Normal';
+                $kategoriLabel = 'NORMAL';
             }
 
             $result[$kode] = [
@@ -416,7 +532,7 @@ class Barang_Import_lib {
                 'satuan'         => $r->satuan,
                 'kelipatan'      => $r->kelipatan ?? 1,
                 'kategori'       => $r->kategori,
-                'kategori_label' => $kategori_label,
+                'kategori_label' => $kategoriLabel,
                 'retail'         => $r->retail,
                 'grosir'         => $r->grosir,
                 'grosir_10'      => $r->grosir_10,
@@ -428,30 +544,53 @@ class Barang_Import_lib {
             ];
         }
 
-        return ['items' => $result];
+        return [
+            'items' => $result,
+        ];
     }
 
     private function detectChanges(array $excelRow, array $dbRow): array
     {
         $changed = [];
-        $skip = ['duplicate', 'kategori_label'];
 
-        foreach ($excelRow as $field => $val) {
-            if (in_array($field, $skip, true)) continue;
-            if (!isset($dbRow[$field])) continue;
+        $textFields = [
+            'kode',
+            'nama',
+            'keterangan',
+            'size',
+            'satuan',
+        ];
 
-            if (is_numeric($val)) {
-                if ((float)$dbRow[$field] !== (float)$val) {
-                    $changed[] = $field;
-                }
-            } else {
-                if ($this->normalize((string)$dbRow[$field]) !== $this->normalize((string)$val)) {
-                    $changed[] = $field;
-                }
+        foreach ($textFields as $field) {
+            $excelValue = $this->normalize($excelRow[$field] ?? '');
+            $dbValue    = $this->normalize($dbRow[$field] ?? '');
+
+            if ($excelValue !== $dbValue) {
+                $changed[] = $field;
             }
         }
 
-        return $changed;
+        if ((int) ($excelRow['kelipatan'] ?? 0) !== (int) ($dbRow['kelipatan'] ?? 0)) {
+            $changed[] = 'kelipatan';
+        }
+
+        foreach ($this->priceFields as $field) {
+            $excelValue = (float) ($excelRow[$field] ?? 0);
+            $dbValue    = (float) ($dbRow[$field] ?? 0);
+
+            if (abs($excelValue - $dbValue) > 0.0001) {
+                $changed[] = $field;
+            }
+        }
+
+        $excelKategori = $this->mapKategoriToDb($excelRow['kategori_label'] ?? 'NORMAL');
+        $dbKategori    = (int) ($dbRow['kategori'] ?? 0);
+
+        if ($excelKategori !== $dbKategori) {
+            $changed[] = 'kategori';
+        }
+
+        return array_values(array_unique($changed));
     }
 
     private function mapKategoriToDb(string $kategoriLabel): int
@@ -467,14 +606,16 @@ class Barang_Import_lib {
             'keterangan'    => $row['keterangan'],
             'size'          => $row['size'],
             'satuan'        => $row['satuan'],
-            'kelipatan'     => max(1, (int)$row['kelipatan']),
-            'retail'        => $row['retail'],
-            'grosir'        => $row['grosir'],
-            'grosir_10'     => $row['grosir_10'],
-            'het_jawa'      => $row['het_jawa'],
-            'indo_barat'    => $row['indo_barat'],
-            'special_price' => $row['special_price'],
-            'barang_x'      => $row['barang_x'],
+            'kelipatan'     => (int) $row['kelipatan'],
+
+            'retail'        => (float) ($row['retail'] ?? 0),
+            'grosir'        => (float) ($row['grosir'] ?? 0),
+            'grosir_10'     => (float) ($row['grosir_10'] ?? 0),
+            'het_jawa'      => (float) ($row['het_jawa'] ?? 0),
+            'indo_barat'    => (float) ($row['indo_barat'] ?? 0),
+            'special_price' => (float) ($row['special_price'] ?? 0),
+            'barang_x'      => (float) ($row['barang_x'] ?? 0),
+
             'kategori'      => $this->mapKategoriToDb($row['kategori_label'] ?? 'NORMAL'),
             'id_perusahaan' => $id_perusahaan,
             'updated_at'    => date('Y-m-d'),
@@ -484,26 +625,77 @@ class Barang_Import_lib {
 
     private function doUpdate(array $dbRow, array $data): bool
     {
-        $skip = ['updated_at', 'id_user', 'id_perusahaan', 'deleted_at'];
+        if (!$this->hasDataChanges($dbRow, $data)) {
+            return false;
+        }
 
-        foreach ($data as $field => $val) {
-            if (in_array($field, $skip, true) || !array_key_exists($field, $dbRow)) {
-                continue;
-            }
+        $this->CI->db
+            ->where('id', $dbRow['id'])
+            ->update('tb_barang', $data);
 
-            if (is_numeric($val) && is_numeric($dbRow[$field])) {
-                if ((float)$dbRow[$field] !== (float)$val) {
-                    $this->CI->db->update('tb_barang', $data, ['id' => $dbRow['id']]);
-                    return true;
-                }
-            } else {
-                if ((string)$dbRow[$field] !== (string)$val) {
-                    $this->CI->db->update('tb_barang', $data, ['id' => $dbRow['id']]);
-                    return true;
-                }
+        return true;
+    }
+
+    private function hasDataChanges(array $dbRow, array $data): bool
+    {
+        $textMap = [
+            'kode_artikel' => 'kode',
+            'nama_artikel' => 'nama',
+            'keterangan'   => 'keterangan',
+            'size'         => 'size',
+            'satuan'       => 'satuan',
+        ];
+
+        foreach ($textMap as $dataField => $dbField) {
+            $newValue = $this->normalize($data[$dataField] ?? '');
+            $oldValue = $this->normalize($dbRow[$dbField] ?? '');
+
+            if ($newValue !== $oldValue) {
+                return true;
             }
         }
 
+        if ((int) ($data['kelipatan'] ?? 0) !== (int) ($dbRow['kelipatan'] ?? 0)) {
+            return true;
+        }
+
+        foreach ($this->priceFields as $field) {
+            $newValue = (float) ($data[$field] ?? 0);
+            $oldValue = (float) ($dbRow[$field] ?? 0);
+
+            if (abs($newValue - $oldValue) > 0.0001) {
+                return true;
+            }
+        }
+
+        if ((int) ($data['kategori'] ?? 0) !== (int) ($dbRow['kategori'] ?? 0)) {
+            return true;
+        }
+
         return false;
+    }
+
+    private function buildSummary(array $items): array
+    {
+        $summary = [
+            'total'     => 0,
+            'insert'    => 0,
+            'update'    => 0,
+            'no_change' => 0,
+            'error'     => 0,
+            'duplicate' => 0,
+        ];
+
+        foreach ($items as $item) {
+            $summary['total']++;
+
+            $status = $item['status'] ?? '';
+
+            if (array_key_exists($status, $summary)) {
+                $summary[$status]++;
+            }
+        }
+
+        return $summary;
     }
 }

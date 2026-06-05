@@ -158,14 +158,27 @@ class Barang extends CI_Controller
 
 	public function preview_import()
 	{
+		header('Content-Type: application/json');
+
 		if (!$this->session->userdata('login')) {
-			echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+			echo json_encode([
+				'success' => false,
+				'error'   => 'Unauthorized',
+			]);
+			return;
+		}
+
+		if (empty($_FILES['file'])) {
+			echo json_encode([
+				'success' => false,
+				'error'   => 'File tidak dikirim',
+			]);
 			return;
 		}
 
 		$result = $this->barang_import_lib->preview(
 			$_FILES['file'],
-			$this->input->post('id_perusahaan')
+			(string) $this->input->post('id_perusahaan')
 		);
 
 		echo json_encode($result);
@@ -173,9 +186,27 @@ class Barang extends CI_Controller
 
 	public function import()
 	{
+		header('Content-Type: application/json');
+
+		if (!$this->session->userdata('login')) {
+			echo json_encode([
+				'success' => false,
+				'error'   => 'Unauthorized',
+			]);
+			return;
+		}
+
+		if (empty($_FILES['file'])) {
+			echo json_encode([
+				'success' => false,
+				'error'   => 'File tidak dikirim',
+			]);
+			return;
+		}
+
 		$result = $this->barang_import_lib->import(
 			$_FILES['file'],
-			$this->input->post('id_perusahaan'),
+			(string) $this->input->post('id_perusahaan'),
 			(string) $this->session->userdata('id')
 		);
 

@@ -774,8 +774,17 @@ label {
       $('#warning_import').addClass('d-none');
       $('#loading_import').addClass('d-none');
       $('#preview_body').html('');
-      $('#sum_total, #sum_nochange, #sum_update, #sum_insert, #sum_error').text('0');
-      $('#btn_import').prop('disabled', false).text('Import').attr('title', '');
+
+      $('#sum_total').text('0');
+      $('#sum_nochange').text('0');
+      $('#sum_update').text('0');
+      $('#sum_insert').text('0');
+      $('#sum_error').text('0');
+
+      $('#btn_import')
+        .prop('disabled', false)
+        .text('Import')
+        .attr('title', '');
     });
 
     $('#file_input').on('change', function() {
@@ -785,6 +794,7 @@ label {
       if (!file) return;
 
       const maxSize = 5 * 1024 * 1024;
+
       if (file.size > maxSize) {
         Swal.fire({
           icon: 'warning',
@@ -793,6 +803,7 @@ label {
           confirmButtonColor: '#d33',
           confirmButtonText: 'OK'
         });
+
         $('#file_input').val('');
         return;
       }
@@ -805,6 +816,7 @@ label {
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'OK'
         });
+
         $('#file_input').val('');
         return;
       }
@@ -813,6 +825,7 @@ label {
       $('#preview_excel').addClass('d-none');
       $('#summary_import').addClass('d-none');
       $('#warning_import').addClass('d-none');
+      $('#preview_body').html('');
 
       let formData = new FormData();
       formData.append('file', file);
@@ -825,6 +838,7 @@ label {
         processData: false,
         contentType: false,
         dataType: 'json',
+
         success: function(res) {
           $('#loading_import').addClass('d-none');
 
@@ -844,7 +858,9 @@ label {
           let selectedPerusahaan = $('#import_perusahaan option:selected').text();
 
           res.data.items.forEach(function(item) {
-            if (item.status !== 'insert' && item.status !== 'update' && item.status !== 'error') return;
+            if (!['insert', 'update', 'error', 'duplicate'].includes(item.status)) {
+              return;
+            }
 
             let badge = '';
             let rowClass = '';
@@ -859,6 +875,10 @@ label {
               let errMsg = (item.errors || []).join(', ');
               badge = '<span class="badge badge-dark">Error</span><br><small class="text-danger">' + errMsg + '</small>';
               rowClass = '';
+            } else if (item.status === 'duplicate') {
+              let errMsg = (item.errors || []).join(', ');
+              badge = '<span class="badge badge-secondary">Duplicate</span><br><small class="text-danger">' + errMsg + '</small>';
+              rowClass = 'table-secondary';
             }
 
             html += `
@@ -870,7 +890,7 @@ label {
                 <td>${item.excel.keterangan || '-'}</td>
                 <td>${item.excel.size || '-'}</td>
                 <td>${item.excel.satuan || '-'}</td>
-                <td>${item.excel.kelipatan || 1}</td>
+                <td>${item.excel.kelipatan || 0}</td>
                 <td>${formatRupiah(item.excel.retail || 0)}</td>
                 <td>${formatRupiah(item.excel.grosir || 0)}</td>
                 <td>${formatRupiah(item.excel.grosir_10 || 0)}</td>
@@ -878,43 +898,69 @@ label {
                 <td>${formatRupiah(item.excel.indo_barat || 0)}</td>
                 <td>${formatRupiah(item.excel.special_price || 0)}</td>
                 <td>${formatRupiah(item.excel.barang_x || 0)}</td>
-              </tr>`;
+              </tr>
+            `;
           });
 
           if (html === '') {
             html = '<tr><td colspan="15" class="text-center text-muted">Tidak ada data baru atau perubahan</td></tr>';
           }
 
-          let errCount = (summary.error || 0) + (summary.duplicate || 0);
+          let total     = summary.total || 0;
+          let noChange  = summary.no_change || 0;
+          let update    = summary.update || 0;
+          let insert    = summary.insert || 0;
+          let error     = summary.error || 0;
+          let duplicate = summary.duplicate || 0;
+
+          let problemCount = error + duplicate;
 
           $('#preview_body').html(html);
           $('#preview_excel').removeClass('d-none');
-          $('#sum_total').text(summary.total || 0);
-          $('#sum_nochange').text(summary.no_change || 0);
-          $('#sum_update').text(summary.update || 0);
-          $('#sum_insert').text(summary.insert || 0);
-          $('#sum_error').text(errCount);
+
+          $('#sum_total').text(total);
+          $('#sum_nochange').text(noChange);
+          $('#sum_update').text(update);
+          $('#sum_insert').text(insert);
+
+          // Ini berarti jumlah data bermasalah, bukan error murni.
+          $('#sum_error').text(problemCount);
+
           $('#summary_import').removeClass('d-none');
 
-          if (errCount > 0) {
-            $('#btn_import').prop('disabled', true).attr('title', 'Tidak bisa import, ada ' + errCount + ' data bermasalah');
+          if (problemCount > 0) {
+            $('#btn_import')
+              .prop('disabled', true)
+              .attr('title', 'Tidak bisa import, ada ' + problemCount + ' data bermasalah');
           } else {
-            $('#btn_import').prop('disabled', false).attr('title', '');
+            $('#btn_import')
+              .prop('disabled', false)
+              .attr('title', '');
           }
 
           $('#warning_import').removeClass('d-none');
         },
+
         error: function(xhr) {
           $('#loading_import').addClass('d-none');
+
           console.log(xhr.responseText);
-          Swal.fire({ icon: 'error', title: 'Server Error', text: xhr.responseText || 'Gagal menghubungi server' });
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Server Error',
+            text: xhr.responseText || 'Gagal menghubungi server'
+          });
         }
       });
     });
 
     function doImport(form) {
       let formData = new FormData(form);
-      $('#btn_import').prop('disabled', true).text('Importing...');
+
+      $('#btn_import')
+        .prop('disabled', true)
+        .text('Importing...');
 
       $.ajax({
         url: $(form).attr('action'),
@@ -923,21 +969,36 @@ label {
         processData: false,
         contentType: false,
         dataType: 'json',
+
         success: function(res) {
-          $('#btn_import').prop('disabled', false).text('Import');
+          $('#btn_import')
+            .prop('disabled', false)
+            .text('Import');
+
           if (!res.success) {
             Swal.fire('Error', res.error || 'Import gagal', 'error');
             return;
           }
+
           Swal.fire({
             icon: 'success',
             title: 'Import Berhasil',
-            html: '<b>' + (res.data.inserted || 0) + '</b> data ditambahkan<br><b>' + (res.data.updated || 0) + '</b> data diupdate'
-          }).then(() => { location.reload(); });
+            html:
+              '<b>' + (res.data.inserted || 0) + '</b> data ditambahkan<br>' +
+              '<b>' + (res.data.updated || 0) + '</b> data diupdate<br>' +
+              '<b>' + (res.data.skipped || 0) + '</b> data dilewati'
+          }).then(() => {
+            location.reload();
+          });
         },
+
         error: function(xhr) {
-          $('#btn_import').prop('disabled', false).text('Import');
+          $('#btn_import')
+            .prop('disabled', false)
+            .text('Import');
+
           console.log(xhr.responseText);
+
           Swal.fire('Error', xhr.responseText || 'Server error', 'error');
         }
       });
