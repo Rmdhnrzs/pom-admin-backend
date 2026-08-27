@@ -163,7 +163,7 @@ input[readonly] {
         <div class="modal-body">
           <div class="form-group">
             <label>Perusahaan :</label>
-            <select name="perusahaan" class="form-control" required>
+            <select name="perusahaan" id="perusahaan_add" class="form-control" required>
               <option value="">-- Pilih Perusahaan --</option>
               <?php foreach ($perusahaan as $p) { ?>
                 <option value="<?= $p->id ?>"><?= $p->nama ?></option>

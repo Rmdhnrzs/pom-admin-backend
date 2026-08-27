@@ -315,9 +315,6 @@
 
   <!-- ACTION -->
   <div class="action-row">
-    <button onclick="openFiles('<?php echo $order->file ?>')" class="btn btn-info btn-sm <?= (is_null($order->file)) ? 'd-none' : '' ?>">
-      <i class="fa fa-download"></i> Lampiran
-    </button>
     <button onclick="exportSo('<?php echo $d->id_order; ?>')" data-toggle="modal" data-target=".exportSo" class="btn btn-info btn-sm">
       <i class="fa fa-download"></i> Export
     </button>
@@ -376,6 +373,48 @@
         </div>
       </div>
     </div>
+
+    <?php if (!is_null($order->file)): ?>
+    <div class="section-box" style="padding-bottom: 0; margin-bottom: 12px;">
+      <div class="section-title">Lampiran</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <?php 
+        $fileArray = explode(',', $order->file);
+        foreach ($fileArray as $i => $file):
+          $file = trim($file);
+          if ($file === '') continue;
+          $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+          $no = $i + 1;
+
+          if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
+            $icon = 'fa-file-image-o'; $color = '#0d6efd';
+          } elseif ($ext === 'pdf') {
+            $icon = 'fa-file-pdf-o'; $color = '#dc3545';
+          } elseif (in_array($ext, ['xls', 'xlsx'])) {
+            $icon = 'fa-file-excel-o'; $color = '#198754';
+          } elseif (in_array($ext, ['doc', 'docx'])) {
+            $icon = 'fa-file-word-o'; $color = '#2c7be5';
+          } else {
+            $icon = 'fa-file-o'; $color = '#6c757d';
+          }
+        ?>
+          <button type="button"
+            onclick="bukaLampiran('<?= base_url('Order/viewLampiran/' . $file) ?>', '<?= $ext ?>', <?= $no ?>)"
+            data-toggle="modal" data-target="#modalLampiran"
+            style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px;
+                  border:1px solid #e0e0e0; border-radius:8px; background:#fff;
+                  font-size:12px; cursor:pointer; color:#333;
+                  transition: box-shadow .15s, border-color .15s;"
+            onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.10)'; this.style.borderColor='#bbb';"
+            onmouseout="this.style.boxShadow='none'; this.style.borderColor='#e0e0e0';">
+            <i class="fa <?= $icon ?>" style="font-size:15px; color:<?= $color ?>;"></i>
+            <span>Lampiran <?= $no ?></span>
+            <span style="font-size:10px; color:#999; text-transform:uppercase;"><?= strtoupper($ext) ?></span>
+          </button>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
 
     <div class="section-box">
       <div class="section-title">Detail Item Order</div>
@@ -447,6 +486,34 @@
       $badge_text = $grandtotal >= $order->minimum_order ? 'SUDAH MEMENUHI MIN. PO' : 'BELUM MEMENUHI MIN. PO';
       echo "<span class='badge badge-$badge_class badge-stock'>$badge_text</span>";
       ?>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Lampiran -->
+<div class="modal fade" id="modalLampiran" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info">
+        <h5 class="modal-title text-white">
+          <i class="fa fa-paperclip mr-1"></i>
+          <span id="modalLampiranTitle">Lampiran</span>
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-hidden="true">&times;</button>
+      </div>
+      <div class="modal-body p-0">
+        <div id="lampiranPreview" style="width:100%; min-height:420px; display:flex; align-items:center; justify-content:center; background:#f8f9fa;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="lampiranBukaBtn" href="#" target="_blank" class="btn btn-outline-secondary btn-sm">
+          <i class="fa fa-external-link"></i> Buka di Tab Baru
+        </a>
+        <a id="lampiranDownloadBtn" href="#" class="btn btn-primary btn-sm">
+          <i class="fa fa-download"></i> Download
+        </a>
+        <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -544,6 +611,33 @@
   }
 </script>
 <script>
+  function bukaLampiran(url, ext, no) {
+      $('#modalLampiranTitle').text('Lampiran ' + no);
+      $('#lampiranBukaBtn').attr('href', url);
+      $('#lampiranDownloadBtn').attr('href', url).attr('download', 'Lampiran_' + no + '.' + ext);
+
+      var preview = '';
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+        preview = '<img src="' + url + '" style="max-width:100%; max-height:500px; object-fit:contain; padding:16px;">';
+      } else if (ext === 'pdf') {
+        preview = '<iframe src="' + url + '" style="width:100%; height:500px; border:none;"></iframe>';
+      } else {
+        preview = '<div style="text-align:center; padding:48px;">'
+                + '<i class="fa fa-file-o" style="font-size:52px; margin-bottom:14px; display:block; color:#ccc;"></i>'
+                + '<p style="font-size:13px; color:#888;">Preview tidak tersedia untuk format <b>' + ext.toUpperCase() + '</b>.</p>'
+                + '<p style="font-size:12px; color:#aaa;">Silakan download atau buka di tab baru.</p>'
+                + '</div>';
+      }
+
+      $('#lampiranPreview').html(preview);
+    }
+
+    $('#modalLampiran').on('hidden.bs.modal', function () {
+      $('#lampiranPreview').html('');
+      $('#lampiranBukaBtn').attr('href', '#');
+      $('#lampiranDownloadBtn').attr('href', '#').removeAttr('download');
+    });
+
   function openFiles(files) {
     var fileArray = files.split(',');
     fileArray.forEach((file, i) => {
